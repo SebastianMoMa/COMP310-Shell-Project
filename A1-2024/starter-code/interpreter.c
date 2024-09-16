@@ -11,6 +11,11 @@ int badcommand(){
     return 1;
 }
 
+int badcommandTooManyTokens(){
+    printf("Bad command: Too many tokens\n");
+    return 2;
+}
+
 // For run command only
 int badcommandFileDoesNotExist(){
     printf("Bad command: File not found\n");
@@ -48,7 +53,8 @@ int interpreter(char* command_args[], int args_size) {
 
     } else if (strcmp(command_args[0], "set") == 0) {
         //set
-        if (args_size != 3) return badcommand();	
+        if (args_size < 3) return badcommand();
+        else if (args_size>7) return ()
         return set(command_args[1], command_args[2]);
     
     } else if (strcmp(command_args[0], "print") == 0) {
@@ -83,14 +89,13 @@ int quit() {
 int set(char *var, char *value) {
     char *link = "=";
 
-    /* PART 1: You might want to write code that looks something like this.
-         You should look up documentation for strcpy and strcat.
+    // PART 1: You might want to write code that looks something like this.
+        //  You should look up documentation for strcpy and strcat.
 
     char buffer[MAX_USER_INPUT];
     strcpy(buffer, var);
     strcat(buffer, link);
     strcat(buffer, value);
-    */
 
     mem_set_value(var, value);
 
