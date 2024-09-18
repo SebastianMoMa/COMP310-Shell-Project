@@ -11,6 +11,12 @@ int badcommand(){
     return 1;
 }
 
+int toomanytokens(){
+    printf("Bad command: Too many tokens\n");
+    return 2;
+}
+
+
 // For run command only
 int badcommandFileDoesNotExist(){
     printf("Bad command: File not found\n");
@@ -48,7 +54,8 @@ int interpreter(char* command_args[], int args_size) {
 
     } else if (strcmp(command_args[0], "set") == 0) {
         //set
-        if (args_size != 3) return badcommand();	
+        if (3 > args_size) return badcommand();
+        else if	(args_size>7) return toomanytokens();
         return set(command_args[1], command_args[2]);
     
     } else if (strcmp(command_args[0], "print") == 0) {
