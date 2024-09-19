@@ -8,6 +8,8 @@
 
 int parseInput(char ui[]);
 
+//Hi my name is Seb
+
 // Start of everything
 int main(int argc, char *argv[]) {
     printf("Shell version 1.3 created September 2024\n");
