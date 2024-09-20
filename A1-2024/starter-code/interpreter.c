@@ -11,11 +11,10 @@ int badcommand(){
     return 1;
 }
 
-int toomanytokens(){
+int badcommandTooManyTokens(){
     printf("Bad command: Too many tokens\n");
     return 2;
 }
-
 
 // For run command only
 int badcommandFileDoesNotExist(){
@@ -90,14 +89,13 @@ int quit() {
 int set(char *var, char *value) {
     char *link = "=";
 
-    /* PART 1: You might want to write code that looks something like this.
-         You should look up documentation for strcpy and strcat.
+    // PART 1: You might want to write code that looks something like this.
+        //  You should look up documentation for strcpy and strcat.
 
     char buffer[MAX_USER_INPUT];
     strcpy(buffer, var);
     strcat(buffer, link);
     strcat(buffer, value);
-    */
 
     mem_set_value(var, value);
 
