@@ -9,6 +9,7 @@
 int parseInput(char ui[]);
 
 //Hi my name is Seb
+// another one
 
 // Start of everything
 int main(int argc, char *argv[]) {
