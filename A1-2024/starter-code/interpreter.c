@@ -54,7 +54,7 @@ int interpreter(char* command_args[], int args_size) {
     } else if (strcmp(command_args[0], "set") == 0) {
         //set
         if (3 > args_size) return badcommand();
-        else if	(args_size>7) return toomanytokens();
+        else if	(args_size>7) return badcommandTooManyTokens();
         return set(command_args[1], command_args[2]);
     
     } else if (strcmp(command_args[0], "print") == 0) {
@@ -95,7 +95,21 @@ int set(char *var, char *value) {
     char buffer[MAX_USER_INPUT];
     strcpy(buffer, var);
     strcat(buffer, link);
-    strcat(buffer, value);
+
+    int num_tokens = 0;
+    while (value[num_tokens] != '\0' && num_tokens < 6) {
+        num_tokens++;
+    }
+
+
+    for (int i = 0; i < num_tokens; i++) {  
+        strcat(buffer, value[i]);
+        if (i != num_tokens - 1) {  // Add space between tokens
+            strcat(buffer, " ");
+        }
+    }
+
+    //strcat(buffer, value);
 
     mem_set_value(var, value);
 
