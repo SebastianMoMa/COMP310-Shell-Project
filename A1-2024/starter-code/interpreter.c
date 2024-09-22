@@ -27,12 +27,13 @@ int quit();
 int set(char* var, char* value);
 int print(char* var);
 int run(char* script);
+int echo(char* value);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size) {
     int i;
-    printf("args_size 1: %d\n", args_size);
+    //printf("args_size 1: %d\n", args_size);
 
     if (args_size < 1 || args_size > MAX_ARGS_SIZE) {
         return badcommand();
@@ -59,15 +60,14 @@ int interpreter(char* command_args[], int args_size) {
             //printf("3>argsize");
             return badcommand();}
         else if	(args_size>7) return badcommandTooManyTokens();
-        printf("I am here and command_args[2] is %s, and command_args[3] is %s \n", command_args[2], command_args[3]);
+       // printf("I am here and command_args[2] is %s, and command_args[3] is %s \n", command_args[2], command_args[3]);
     char value[MAX_USER_INPUT] = "";
     for (int i = 2; i < args_size; i++) {
         if (i > 2) strcat(value, " "); // Add space if not the first token
         strcat(value, command_args[i]);
     }
-
     return set(command_args[1], value);
-        
+
     } else if (strcmp(command_args[0], "print") == 0) {
         if (args_size != 2) return badcommand();
         return print(command_args[1]);
@@ -76,7 +76,14 @@ int interpreter(char* command_args[], int args_size) {
         if (args_size != 2) return badcommand();
         return run(command_args[1]);
     
-    } else return badcommand();
+    } 
+
+    else if (strcmp(command_args[0], "echo") ==0) {
+        if (args_size != 2) return badcommand();
+        return echo(command_args[1]);
+    }
+    
+    else return badcommand();
 }
 
 int help() {
@@ -98,23 +105,30 @@ int quit() {
 }
 
 int set(char *var, char *value) {
-    char *link = "=";
-
-    // PART 1: You might want to write code that looks something like this.
-        //  You should look up documentation for strcpy and strcat.
-
-
-    printf("var: %s, value: %s\n", var, value);
-
-    char buffer[MAX_USER_INPUT];
-    strcpy(buffer, var);
-    strcat(buffer, link);
-    strcat(buffer, value);
+   // printf("var: %s, value: %s\n", var, value);
 
     mem_set_value(var, value);
 
     return 0;
+}
 
+int echo(char *arg) {
+
+    if (arg[0] == '$'){
+        char* var_name = arg + 1;
+        char* value = mem_get_value(var_name);
+        printf("this is value: %s\n", value);
+        if (strcmp("Variable does not exist", value) !=0) {
+            printf("%s\n", value); // Print the value if it exists
+        } else {
+            printf("\n"); // Print a blank line if the variable is not found
+        }
+    }
+    else {
+        printf("%s\n", arg); // Print the argument directly
+    }
+
+    return 0;
 }
 
 int print(char *var) {
