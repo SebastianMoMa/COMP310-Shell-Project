@@ -1,0 +1,4 @@
+echo hello
+set var1 value1
+print var1
+quit

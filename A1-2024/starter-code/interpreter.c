@@ -68,11 +68,14 @@ int interpreter(char* command_args[], int args_size) {
     }
     return set(command_args[1], value);
 
+    // print
     } else if (strcmp(command_args[0], "print") == 0) {
         if (args_size != 2) return badcommand();
         return print(command_args[1]);
     
-    } else if (strcmp(command_args[0], "run") == 0) {
+    } 
+    // run
+    else if (strcmp(command_args[0], "run") == 0) {
         if (args_size != 2) return badcommand();
         return run(command_args[1]);
     
@@ -131,6 +134,7 @@ int echo(char *arg) {
 
     return 0;
 }
+
 
 int print(char *var) {
     printf("%s\n", mem_get_value(var)); 
