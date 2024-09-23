@@ -1,4 +1,7 @@
-echo hello
-set var1 value1
+echo beautiful
+set var1 sebas
 print var1
-quit
+echo lovely
+set var2 friends
+echo $var2
+print var2

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
-//#include <unistd.h>
+#include <unistd.h>
 #include "shell.h"
 #include "interpreter.h"
 #include "shellmemory.h"
@@ -14,24 +14,76 @@ int parseInput(char ui[]);
 // Start of everything
 int main(int argc, char *argv[]) {
     printf("Shell version 1.3 created September 2024\n");
+        //printf("got here\n");
+
     help();
+    //printf("got here\n");
+    //fflush(stdout);
+
 
     char prompt = '$';  				// Shell prompt
     char userInput[MAX_USER_INPUT];		// user's input stored here
     int errorCode = 0;					// zero means no error, default
-
+    //printf("got here\n");
     //init user input
     for (int i = 0; i < MAX_USER_INPUT; i++) {
         userInput[i] = '\0';
     }
+
     
+    FILE *input = stdin; //Essentially like saying that it should be interactive as default
+    //printf("this is arg_count: %i", argc);
+    int isBatch = 0;
+    if (!isatty(fileno(stdin))) { 
+        //prompt = "\0"; 
+        int isBatch = 1;
+    }
+    /*
+    if (argc>1) {
+    printf("Right before opening file\n");
+    FILE *input = fopen(argv[1], "r");
+    printf("Opened file\n");
+    if (input != NULL) {
+        prompt = '\0';
+
+    }
+    
+}
+ */   
     //init shell memory
     mem_init();
-    while(1) {							
-        printf("%c ", prompt);
+    while(1) {		
+        //printf("right before showing prompt");
+        if (isBatch){	 
+            printf("%c ", prompt);}
         // here you should check the unistd library 
         // so that you can find a way to not display $ in the batch mode
-        fgets(userInput, MAX_USER_INPUT-1, stdin);
+    if (fgets(userInput, MAX_USER_INPUT - 1, input) == NULL) {
+        if (feof(stdin)) {
+                clearerr(stdin);
+                fclose(input);
+                input = stdin;
+                prompt = '$';
+                //printf("Entering interactive mode\n");
+                continue;
+            }
+            break; 
+        }
+    
+/*
+            if (isBatch) {
+                fclose(input); // Close the batch file
+                printf("closed file\n");
+                isBatch = 0;
+                input = stdin;
+            }
+            input = stdin;
+            prompt = '$';
+            printf("Entering interactive mode\n");
+
+            continue; 
+        }
+*/
         errorCode = parseInput(userInput);
         if (errorCode == -1) exit(99);	// ignore all other errors
         memset(userInput, 0, sizeof(userInput));
