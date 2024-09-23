@@ -117,8 +117,9 @@ int echo(char *arg) {
     if (arg[0] == '$'){
         char* var_name = arg + 1;
         char* value = mem_get_value(var_name);
-        printf("this is value: %s\n", value);
+        //printf("this is value: %s\n", value);
         if (strcmp("Variable does not exist", value) !=0) {
+           // printf("strcmp returned !0 so they are value != Variable does not exist ");
             printf("%s\n", value); // Print the value if it exists
         } else {
             printf("\n"); // Print a blank line if the variable is not found
