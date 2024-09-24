@@ -60,20 +60,12 @@ int interpreter(char* command_args[], int args_size) {
             //printf("3>argsize");
             return badcommand();}
         else if	(args_size>7) return badcommandTooManyTokens();
-<<<<<<< HEAD
         // printf("I am here and command_args[2] is %s, and command_args[3] is %s \n", command_args[2], command_args[3]);
         char value[MAX_USER_INPUT] = "";
         for (int i = 2; i < args_size; i++) {
             if (i > 2) strcat(value, " "); // Add space if not the first token
             strcat(value, command_args[i]);
-=======
-       // printf("I am here and command_args[2] is %s, and command_args[3] is %s \n", command_args[2], command_args[3]);
-    char value[MAX_USER_INPUT] = "";
-    for (int i = 2; i < args_size; i++) {
-        if (i > 2) strcat(value, " "); // Add space if not the first token
-        strcat(value, command_args[i]);
->>>>>>> create-echo
-    }
+        }
     return set(command_args[1], value);
 
     } else if (strcmp(command_args[0], "print") == 0) {
@@ -113,29 +105,12 @@ int quit() {
 }
 
 int set(char *var, char *value) {
-<<<<<<< HEAD
-    char *link = "=";
-
-    // PART 1: You might want to write code that looks something like this.
-        //  You should look up documentation for strcpy and strcat.
-        
-    // printf("var: %s, value: %s\n", var, value);
-
-    char buffer[MAX_USER_INPUT];
-    strcpy(buffer, var);
-    strcat(buffer, link);
-    strcat(buffer, value);
-=======
    // printf("var: %s, value: %s\n", var, value);
->>>>>>> create-echo
-
     mem_set_value(var, value);
-
     return 0;
 }
 
 int echo(char *arg) {
-
     if (arg[0] == '$'){
         char* var_name = arg + 1;
         // gets the position of the variable in memory if it exists
