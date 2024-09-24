@@ -50,18 +50,21 @@ void mem_set_value(char *var_in, char *value_in) {
             return;
         } 
     }
-
     return;
 }
 
-//get value based on input key
-char *mem_get_value(char *var_in) {
+// helper function to check if var exists in memory
+int mem_check_value(char *var_in) {
     int i;
-
     for (i = 0; i < MEM_SIZE; i++){
         if (strcmp(shellmemory[i].var, var_in) == 0){
-            return strdup(shellmemory[i].value);
+            return i;
         } 
     }
-    return "Variable does not exist";
+    return -1;
+}
+
+char *mem_get_value(int j) {
+    // if non-neggative value, value exists -> return it. Otherwise print message.
+    return (j>=0)?strdup(shellmemory[j].value):"Variable does not exist";
 }

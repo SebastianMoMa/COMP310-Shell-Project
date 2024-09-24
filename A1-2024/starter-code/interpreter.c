@@ -116,11 +116,10 @@ int echo(char *arg) {
 
     if (arg[0] == '$'){
         char* var_name = arg + 1;
-        char* value = mem_get_value(var_name);
-        //printf("this is value: %s\n", value);
-        if (strcmp("Variable does not exist", value) !=0) {
-           // printf("strcmp returned !0 so they are value != Variable does not exist ");
-            printf("%s\n", value); // Print the value if it exists
+        // gets the position of the variable in memory if it exists
+        int pos = mem_check_value(var_name);
+        if (pos >=0) {
+            printf("%s\n", mem_get_value(pos)); // Get and print the value if it exists
         } else {
             printf("\n"); // Print a blank line if the variable is not found
         }
@@ -128,12 +127,12 @@ int echo(char *arg) {
     else {
         printf("%s\n", arg); // Print the argument directly
     }
-
     return 0;
 }
 
 int print(char *var) {
-    printf("%s\n", mem_get_value(var)); 
+    int i=mem_check_value(var);
+    printf("%s\n", mem_get_value(i)); 
     return 0;
 }
 
