@@ -3,6 +3,8 @@
 #include <string.h> 
 #include "shellmemory.h"
 #include "shell.h"
+#include "dirent.h"
+#include "ctype.h"
 
 int MAX_ARGS_SIZE = 8;
 
@@ -28,6 +30,7 @@ int set(char* var, char* value);
 int print(char* var);
 int run(char* script);
 int echo(char* value);
+int my_ls();
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
@@ -85,6 +88,10 @@ int interpreter(char* command_args[], int args_size) {
         if (args_size != 2) return badcommand();
         return echo(command_args[1]);
     }
+
+    else if(strcmp(command_args[0], "my_ls")==0){
+        return my_ls();
+    }
     
     else return badcommand();
 }
@@ -135,6 +142,50 @@ int echo(char *arg) {
     return 0;
 }
 
+int compare(const struct dirent **a, const struct dirent **b) {
+    if (isdigit((**a).d_name[0]) && isdigit((*b)->d_name[0])) {
+        /*
+        if ((**a).d_name[0] > (*b)->d_name[0]) {
+            return -1;
+        }
+        else if ((**a).d_name[0] < (*b)->d_name[0]) {
+            return 1;
+        }
+        else {return 0;}
+        */
+       return strcmp((*a)->d_name,(*b)->d_name); //I'm pretty sure this function should just work 
+    }
+    else if (isdigit((*a)->d_name[0])){
+        return -1;
+    }
+
+    else if (isdigit((*b)->d_name[0])){
+        return 1;
+    }
+    else{
+    return strcmp((**a).d_name, (*b)->d_name);
+    }
+}
+
+
+
+int my_ls() {
+    struct dirent **nameList;
+    int n = scandir(".", &nameList,NULL, compare);
+    
+    for (int i = 0; i < n; i++){
+        if (nameList[i]->d_name[0] =='.'){
+            continue;
+        }
+        printf("%s/\n", nameList[i]->d_name);
+        free(nameList[i]);
+    }
+    free(nameList);
+    
+
+    return 0;
+}
+
 
 int print(char *var) {
     printf("%s\n", mem_get_value(var)); 
@@ -165,3 +216,6 @@ int run(char *script) {
 
     return errCode;
 }
+
+
+//Error detected with the prompt symbol '$' and I have not gotten my_ls to work

@@ -36,25 +36,13 @@ int main(int argc, char *argv[]) {
     int isBatch = 0;
     if (!isatty(fileno(stdin))) { 
         //prompt = "\0"; 
-        int isBatch = 1;
+         isBatch = 1;
     }
-    /*
-    if (argc>1) {
-    printf("Right before opening file\n");
-    FILE *input = fopen(argv[1], "r");
-    printf("Opened file\n");
-    if (input != NULL) {
-        prompt = '\0';
-
-    }
-    
-}
- */   
+   
     //init shell memory
     mem_init();
     while(1) {		
-        //printf("right before showing prompt");
-        if (isBatch){	 
+        if (!isBatch){	  // Problem lies here for the batch mode, or the way I handle the prompt
             printf("%c ", prompt);}
         // here you should check the unistd library 
         // so that you can find a way to not display $ in the batch mode
@@ -118,3 +106,5 @@ int parseInput(char inp[]) {
     errorCode = interpreter(words, w);
     return errorCode;
 }
+
+
