@@ -129,7 +129,7 @@ int echo(char *arg) {
         }
     }
     else {
-        printf("%s\n", arg); // Print the argument directly
+        printf("%s\n", arg); 
     }
 
     return 0;
