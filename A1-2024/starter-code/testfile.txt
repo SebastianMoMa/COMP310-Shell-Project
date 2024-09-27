@@ -5,3 +5,4 @@ echo lovely
 set var2 friends
 echo $var2
 print var2
+my_ls
