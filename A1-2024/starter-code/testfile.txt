@@ -1,0 +1,8 @@
+echo beautiful
+set var1 sebas
+print var1
+echo lovely
+set var2 friends
+echo $var2
+print var2
+my_ls

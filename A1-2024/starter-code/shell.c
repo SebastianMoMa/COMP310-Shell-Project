@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
-//#include <unistd.h>
+#include <unistd.h>
 #include "shell.h"
 #include "interpreter.h"
 #include "shellmemory.h"
@@ -14,24 +14,59 @@ int parseInput(char ui[]);
 // Start of everything
 int main(int argc, char *argv[]) {
     printf("Shell version 1.3 created September 2024\n");
+
     help();
+
+
 
     char prompt = '$';  				// Shell prompt
     char userInput[MAX_USER_INPUT];		// user's input stored here
     int errorCode = 0;					// zero means no error, default
-
-    //init user input
+   
     for (int i = 0; i < MAX_USER_INPUT; i++) {
         userInput[i] = '\0';
     }
+
     
+    FILE *input = stdin; 
+    int isBatch = 0;
+    if (!isatty(fileno(stdin))) { 
+        //prompt = "\0"; 
+         isBatch = 1;
+    }
+   
     //init shell memory
     mem_init();
-    while(1) {							
-        printf("%c ", prompt);
-        // here you should check the unistd library 
-        // so that you can find a way to not display $ in the batch mode
-        fgets(userInput, MAX_USER_INPUT-1, stdin);
+    while(1) {		
+        if (!isBatch){	  // Problem lies here for the batch mode, or the way I handle the prompt
+            printf("%c ", prompt);}
+       
+    if (fgets(userInput, MAX_USER_INPUT - 1, input) == NULL) {
+        if (feof(stdin)) {
+                clearerr(stdin);
+                fclose(input);
+                input = stdin;
+                prompt = '$';
+                //printf("Entering interactive mode\n");
+                continue;
+            }
+            break; 
+        }
+    
+/*
+            if (isBatch) {
+                fclose(input); // Close the batch file
+                printf("closed file\n");
+                isBatch = 0;
+                input = stdin;
+            }
+            input = stdin;
+            prompt = '$';
+            printf("Entering interactive mode\n");
+
+            continue; 
+        }
+*/
         errorCode = parseInput(userInput);
         if (errorCode == -1) exit(99);	// ignore all other errors
         memset(userInput, 0, sizeof(userInput));
@@ -66,3 +101,5 @@ int parseInput(char inp[]) {
     errorCode = interpreter(words, w);
     return errorCode;
 }
+
+
