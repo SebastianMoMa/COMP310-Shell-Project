@@ -3,12 +3,13 @@
 #include <string.h> 
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "shellmemory.h"
 #include "shell.h"
 #include "dirent.h"
 #include "ctype.h"
 
-int MAX_ARGS_SIZE = 8;
+int MAX_ARGS_SIZE = 7;
 
 int badcommand(){
     printf("Unknown Command\n");
@@ -31,6 +32,11 @@ int badcommandMkDirectory(){
     return 3;
 }
 
+int badcommandMyCd(){
+    printf("Bad command: my_cd\n");
+    return 3;
+}
+
 int help();
 int quit();
 int set(char* var, char* value);
@@ -39,6 +45,8 @@ int run(char* script);
 int echo(char* value);
 int my_ls();
 int my_mkdir(char* dirname);
+int my_cd(char* dirname);
+int my_touch(char* filename);
 bool isOne(char *word);
 bool isAlphaNum(char *word);
 int badcommandFileDoesNotExist();
@@ -46,10 +54,13 @@ int badcommandFileDoesNotExist();
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size) {
     int i;
-    //printf("args_size 1: %d\n", args_size);
+    // printf("args_size 1: %d\n", args_size);
 
-    if (args_size < 1 || args_size > MAX_ARGS_SIZE) {
+    if (args_size < 1) {
         return badcommand();
+    }
+    else if (args_size > MAX_ARGS_SIZE){
+        return badcommandTooManyTokens();
     }
 
     for (i = 0; i < args_size; i++) { // terminate args at newlines
@@ -67,13 +78,8 @@ int interpreter(char* command_args[], int args_size) {
         return quit();
 
     } else if (strcmp(command_args[0], "set") == 0) {
-        //set
-        //printf("args_size 2: %d\n", args_size);
-        if (3 > args_size) {
-            //printf("3>argsize");
-            return badcommand();}
-        else if	(args_size>7) return badcommandTooManyTokens();
-        // printf("I am here and command_args[2] is %s, and command_args[3] is %s \n", command_args[2], command_args[3]);
+        if (args_size<3) { return badcommand();}
+        // else if	(args_size>7) return badcommandTooManyTokens();
         char value[MAX_USER_INPUT] = "";
         for (int i = 2; i < args_size; i++) {
             if (i > 2) strcat(value, " "); // Add space if not the first token
@@ -106,6 +112,16 @@ int interpreter(char* command_args[], int args_size) {
     else if(strcmp(command_args[0], "my_mkdir")==0){
         if (args_size != 2) return badcommand();
         return my_mkdir(command_args[1]);
+    }
+
+    else if(strcmp(command_args[0], "my_touch")==0){
+        if (args_size != 2) return badcommand();
+        return my_touch(command_args[1]);
+    }
+
+    else if(strcmp(command_args[0], "my_cd")==0){
+        if (args_size != 2) return badcommand();
+        return my_cd(command_args[1]);
     }
     
     else return badcommand();
@@ -236,6 +252,18 @@ int my_mkdir(char *dirname) {
         }
     }
     return 0;
+}
+
+int my_touch(char *filename){
+    FILE *fptr;
+    fptr = fopen(filename, "w");
+    fclose(fptr);
+}
+
+int my_cd(char *dirname){
+    struct stat sbuf;
+    if (stat(dirname, &sbuf) != 0) return badcommandMyCd();
+    chdir(dirname);
 }
 
 
