@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
+#include <stdbool.h>
+#include <sys/stat.h>
 #include "shellmemory.h"
 #include "shell.h"
 #include "dirent.h"
@@ -24,6 +26,11 @@ int badcommandFileDoesNotExist(){
     return 3;
 }
 
+int badcommandMkDirectory(){
+    printf("Bad command: my_mkdir\n");
+    return 3;
+}
+
 int help();
 int quit();
 int set(char* var, char* value);
@@ -31,6 +38,9 @@ int print(char* var);
 int run(char* script);
 int echo(char* value);
 int my_ls();
+int my_mkdir(char* dirname);
+bool isOne(char *word);
+bool isAlphaNum(char *word);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
@@ -91,6 +101,11 @@ int interpreter(char* command_args[], int args_size) {
 
     else if(strcmp(command_args[0], "my_ls")==0){
         return my_ls();
+    }
+
+    else if(strcmp(command_args[0], "my_mkdir")==0){
+        if (args_size != 2) return badcommand();
+        return my_mkdir(command_args[1]);
     }
     
     else return badcommand();
@@ -162,8 +177,6 @@ int compare(const struct dirent **a, const struct dirent **b) {
     }
 }
 
-
-
 int my_ls() {
     struct dirent **nameList;
     int n = scandir(".", &nameList,NULL, compare);
@@ -172,12 +185,56 @@ int my_ls() {
         if (nameList[i]->d_name[0] =='.'){
             continue;
         }
-        printf("%s/\n", nameList[i]->d_name);
+        printf("%s\n", nameList[i]->d_name);
         free(nameList[i]);
     }
     free(nameList);
     
+    return 0;
+}
 
+bool isAlphaNum(char *word){
+    int i=0;
+    while (word[i]!='\0'){
+        if(!(isalnum(word[i]))) return false;
+        i++;
+    }
+    return true;
+}
+
+bool isOne(char *word){
+    int i=0;
+    while (word[i]!='\0'){
+        if(isspace(word[i])) return false;
+        i++;
+    }
+    return true;
+}
+
+int my_mkdir(char *dirname) {
+    if (dirname[0] == '$'){
+        char* var_name = dirname + 1;
+        // gets the position of the variable in memory if it exists
+        int pos = mem_check_value(var_name);
+        if (pos >=0) {
+            //make directory with the value it got
+            //check if only one value
+            char *value=mem_get_value(pos);
+            if (isOne(value)){
+                mkdir(value,0755);
+            }
+            else{
+                return badcommandMkDirectory();
+            }
+        } else {
+            return badcommandMkDirectory();
+        }
+    }
+    else {
+        if (isAlphaNum(dirname)){
+            mkdir(dirname,0755);
+        }
+    }
     return 0;
 }
 
@@ -212,6 +269,3 @@ int run(char *script) {
 
     return errCode;
 }
-
-
-//Error detected with the prompt symbol '$' and I have not gotten my_ls to work
