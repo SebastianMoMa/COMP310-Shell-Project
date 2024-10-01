@@ -67,23 +67,43 @@ int wordEnding(char c) {
 }
 
 int parseInput(char inp[]) {
-    char tmp[200], *words[100];                            
-    int ix = 0, w = 0;
-    int wordlen;
     int errorCode;
-    for (ix = 0; inp[ix] == ' ' && ix < 1000; ix++); // skip white spaces
-    while (inp[ix] != '\n' && inp[ix] != '\0' && ix < 1000) {
+   
+    char *commands[10];
+    int commandCount = 0;
+    
+    char *token = strtok(inp, ";");
+
+     while (token != NULL && commandCount !=10){
+      commands[commandCount] = token;
+      commandCount ++;
+      token = strtok(NULL, ";");
+      }
+    
+    for (int commandNUM = 0; commandNUM < commandCount; commandNUM++)
+    {
+        char *instruction = commands[commandNUM];
+    char tmp[200], *words[100];                            
+    int ix = 0, w = 0; //ix = index, w = word
+    int wordlen;
+    
+    for (ix = 0; instruction[ix] == ' ' && ix < 1000; instruction++); // skip white spaces
+    while (instruction[ix] != '\n' && instruction[ix] != '\0' && ix < 1000) {
         // extract a word
-        for (wordlen = 0; !wordEnding(inp[ix]) && ix < 1000; ix++, wordlen++) {
-            tmp[wordlen] = inp[ix];                        
+        for (wordlen = 0; !wordEnding(instruction[ix]) && ix < 1000; ix++, wordlen++) {
+            tmp[wordlen] = instruction[ix];                        
         }
         tmp[wordlen] = '\0';
         words[w] = strdup(tmp);
         w++;
-        if (inp[ix] == '\0') break;
+        if (instruction[ix] == '\0') break;
         ix++; 
     }
     errorCode = interpreter(words, w);
+    if (errorCode ==-1){
+        return errorCode;
+    }
+    }
     return errorCode;
 }
 
