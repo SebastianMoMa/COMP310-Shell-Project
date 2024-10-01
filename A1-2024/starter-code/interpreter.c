@@ -198,7 +198,7 @@ int my_ls() {
     int n = scandir(".", &nameList,NULL, compare);
     
     for (int i = 0; i < n; i++){
-        if (nameList[i]->d_name[0] =='.'){
+        if (nameList[i]->d_name[0] =='.' ){
             continue;
         }
         printf("%s\n", nameList[i]->d_name);

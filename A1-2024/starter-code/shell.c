@@ -31,7 +31,6 @@ int main(int argc, char *argv[]) {
     FILE *input = stdin; 
     int isBatch = 0;
     if (!isatty(fileno(stdin))) { 
-        //prompt = "\0"; 
          isBatch = 1;
     }
    
@@ -53,20 +52,6 @@ int main(int argc, char *argv[]) {
             break; 
         }
     
-/*
-            if (isBatch) {
-                fclose(input); // Close the batch file
-                printf("closed file\n");
-                isBatch = 0;
-                input = stdin;
-            }
-            input = stdin;
-            prompt = '$';
-            printf("Entering interactive mode\n");
-
-            continue; 
-        }
-*/
         errorCode = parseInput(userInput);
         if (errorCode == -1) exit(99);	// ignore all other errors
         memset(userInput, 0, sizeof(userInput));
