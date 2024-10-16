@@ -10,6 +10,74 @@ struct memory_struct {
 
 struct memory_struct shellmemory[MEM_SIZE];
 
+
+struct ReadyQueue {
+    struct PCB *head;
+    struct PCB *tail;
+    int count;
+} ready;
+
+struct PCB {
+    int pid; 
+    int current_instruction;
+    struct PCB *next; 
+};
+
+
+struct LineNode {
+    char line[100];            // the 100 is arbitrary right now
+    struct LineNode *next;                 
+} LineNode;
+
+struct Script {
+    int id;            
+    struct LineNode *head;     
+    struct LineNode *tail;
+    struct LineNode current;
+    int current_instruction_num;     
+    int line_count;            
+};
+
+struct Script scripts[3];
+
+/*struct ScriptList {
+    struct Script scripts[3]; // This array should account for their possibly being up to 3 scripts
+    int script_count;                    // Count of scripts in the list
+} Scripty;
+*/
+
+struct Script* create_script(int id) {
+    struct Script *new_script = malloc(sizeof(struct Script));
+    if (new_script != NULL) {
+        new_script->id=id;
+        //strncpy(new_script->name, name, sizeof(new_script->name));
+        new_script->head = NULL; 
+        new_script->tail = NULL; 
+        new_script->line_count = 0;
+    }
+    return new_script; 
+}
+
+void add_line_to_script(struct Script *script, const char *line) {
+    struct LineNode *new_line_node = malloc(sizeof(struct LineNode));
+    if (new_line_node != NULL) {
+        strncpy(new_line_node->line, line, sizeof(new_line_node->line)); 
+        new_line_node->next = NULL; 
+
+        // Append to the linked list
+        if (script->head == NULL) {
+            script->head = new_line_node; 
+        } else {
+            script->tail->next = new_line_node; 
+        }
+        script->tail = new_line_node; 
+        script->line_count++; 
+    }
+}
+
+
+
+
 // Helper functions
 int match(char *model, char *var) {
     int i, len = strlen(var), matchCount = 0;
@@ -29,6 +97,7 @@ void mem_init(){
         shellmemory[i].var   = "none";
         shellmemory[i].value = "none";
     }
+
 }
 
 // Set key value pair

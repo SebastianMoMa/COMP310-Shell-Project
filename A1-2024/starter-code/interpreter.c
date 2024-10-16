@@ -8,6 +8,8 @@
 #include "shell.h"
 #include "dirent.h"
 #include "ctype.h"
+#include "script.h"
+
 
 int MAX_ARGS_SIZE = 7;
 
@@ -281,7 +283,64 @@ int run(char *script) {
     if (p == NULL) {
         return badcommandFileDoesNotExist();
     }
+    
+    struct Script *new_script = create_script(script_count);  // Initialize the script
+    if (new_script == NULL) {
+        fclose(p);  
+        return memoryAllocationError(); // ????
+    }
 
+    struct PCB script_new;
+    script_new.current_instruction=0;
+    script_new.next = NULL;
+    script_new.pid = ready.count;
+
+    if (ready.head == NULL) {
+        ready.head = &script_new;
+        ready.count ++;
+    }
+    else {
+        ready.tail->next = &script_new; // Link the current tail to the new process
+        ready.tail = &script_new; // Update tail to the new process
+        ready.count++;
+        /*
+        struct PCB current = *ready.head;
+        while (current.next != NULL){
+            current = *current.next;
+        }
+        current.next = &script_new;
+        ready.count++;
+        */
+    }
+    
+
+    if (script_count<4 && scripts[script_count].head != NULL ) {
+    scripts[script_count] = *new_script; //Putting it into the array for scripts, not sure if this is neccesary yet
+    script_count ++;
+    } //Need to find a way to number these for the future ones
+    
+
+    while (1) {
+        if (feof(p)) {
+            break;
+        }
+        fgets(line, sizeof(line),p);
+        
+        // Remove newline character if present
+        line[strcspn(line, "\n")] = '\0';
+
+        add_line_to_script(new_script, line);
+        
+        /*
+        else {
+            free_script(new_script);  // Custom function to free allocated memory for script
+            fclose(p);
+            return memoryAllocationError();
+        }
+        */
+    }
+
+/* 
     fgets(line, MAX_USER_INPUT-1, p);
     while (1) {
         errCode = parseInput(line);	// which calls interpreter()
@@ -292,8 +351,46 @@ int run(char *script) {
         }
         fgets(line, MAX_USER_INPUT-1, p);
     }
+*/ 
 
     fclose(p);
 
+
+
     return errCode;
+}
+
+void scheduler() {
+    while (ready.head != NULL) {
+        // Get the current process from the head
+        struct PCB* current_process = ready.head;
+        struct Script current_script = scripts[current_process->pid]; //Get the process from array
+        struct LineNode current_line_node = current_script.current; // get current line_node
+        char *current_line = current_line_node.line; // get current line
+        int current_instruction_num = current_script.current_instruction_num;
+
+        // Run the process using the current instruction
+        //int errCode = interpreter(current_process->current_instruction);
+        int errCode = parseInput(current_line);
+        // Update the current instruction (for FCFS, we just increment it)
+        current_line = current_line_node.next;
+        current_script.current_instruction_num ++; // update current instruction and number
+        
+        // Check if the process is finished
+        if (current_script.current_instruction_num >= current_script.line_count) {
+            // Clean up the process
+            cleanup_process(current_process);
+        } 
+        else {
+            // Move the current process to the tail (if not finished)
+            ready.head = ready.head->next;
+            current_process->next = NULL;
+            if (ready.tail != NULL) {
+                ready.tail->next = current_process;
+                ready.tail = current_process;
+            } else {
+                ready.tail = current_process; // If ready was empty
+            }
+        }
+    }
 }
