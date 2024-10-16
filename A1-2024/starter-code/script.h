@@ -1,13 +1,11 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
-#define MAX_USER_INPUT 1024  // Adjust 
 
-struct Script scripts[3];
-int script_count = 0;
+
 
 struct LineNode {
-    char line[MAX_USER_INPUT];  
+    char line[100];  
     struct LineNode *next;      
 };
 
@@ -16,15 +14,13 @@ struct Script {
     int id;
     struct LineNode *head;     
     struct LineNode *tail;
-    struct LineNode current;
+    struct LineNode *current;
     int current_instruction_num;     
     int line_count;            
 };
 
-struct ScriptList {
-    struct Script scripts[3]; // This array should account for their possibly being up to 3 scripts
-    int script_count;                    // Count of scripts in the list
-} Scripty;
+struct Script scripts[3];
+int script_count = 0;
 
 
 struct ReadyQueue {
@@ -40,7 +36,7 @@ struct PCB {
 };
 
 // Function prototypes for creating and managing scripts
-struct Script* create_script(const char *name);
+struct Script* create_script(int id);
 void free_script(struct Script *script);
 void add_line_to_script(struct Script *script, const char *line);
 
