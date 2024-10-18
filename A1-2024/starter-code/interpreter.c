@@ -43,6 +43,12 @@ int badcommandMyCd()
     return 3;
 }
 
+int badcommandtooManyProcesses()
+{
+    printf("Bad command: too many Processes for exec");
+    return 4;
+}
+
 int help();
 int quit();
 int set(char *var, char *value);
@@ -56,6 +62,8 @@ int my_touch(char *filename);
 bool isOne(char *word);
 bool isAlphaNum(char *word);
 int badcommandFileDoesNotExist();
+int exec(char *processes[], int numProcesses,char *policy);
+void FCFS();
 
 // Interpret commands and their arguments
 int interpreter(char *command_args[], int args_size)
@@ -91,6 +99,7 @@ int interpreter(char *command_args[], int args_size)
             return badcommand();
         return quit();
     }
+    // set
     else if (strcmp(command_args[0], "set") == 0)
     {
         if (args_size < 3)
@@ -107,6 +116,7 @@ int interpreter(char *command_args[], int args_size)
         }
         return set(command_args[1], value);
     }
+    // print
     else if (strcmp(command_args[0], "print") == 0)
     {
         if (args_size != 2)
@@ -153,6 +163,21 @@ int interpreter(char *command_args[], int args_size)
         if (args_size != 2)
             return badcommand();
         return my_cd(command_args[1]);
+    }
+    else if (strcmp(command_args[0], "exec") == 0)
+    {
+        if (args_size > 5)
+        {
+            return badcommandtooManyProcesses();
+        }
+        char *processes[args_size - 2];
+        int numProcesses=0;
+        for (int i = 1; i < args_size - 1; i++)
+        {
+            processes[i - 1] = command_args[i];
+            numProcesses ++;
+        }
+        return exec(processes, numProcesses, command_args[args_size - 1]);
     }
 
     else
@@ -339,6 +364,123 @@ int print(char *var)
     printf("%s\n", mem_get_value(i));
     return 0;
 }
+
+int loadProcessestoMemory(char* process){
+    //Implement what I did in run
+    int errCode = 0;
+    char line[MAX_USER_INPUT];
+    FILE *p = fopen(process, "rt"); // the program is in a file
+
+    if (p == NULL)
+    {
+        return badcommandFileDoesNotExist();
+    }
+    
+    struct Script *new_script = create_script(script_count); // Initialize the script
+    if (new_script == NULL)
+    {
+        fclose(p);
+        return errCode; // ????
+    }
+    scripts[script_count % 3] = new_script; // Putting it into the array for scripts, not sure if this is neccesary yet
+    script_count++;
+
+    struct PCB *script_new = (struct PCB *)malloc(sizeof(struct PCB));
+    if (script_new == NULL)
+    {
+        fclose(p);
+        free_script(new_script); // Free the allocated script memory
+        return errCode;          // This needs to be figured out
+        // return memoryAllocationError(); //Don't really have to do this
+    }
+
+    script_new->current_instruction = 0;
+    script_new->next = NULL;
+    script_new->pid = ready.count;
+
+    if (ready.head == NULL)
+    {
+        // printf("ready.head == NULL\n");
+        ready.head = script_new;
+        ready.tail = script_new;
+    }
+    else
+    {
+        // printf("ready.head != NULL\n");
+        ready.tail->next = script_new; // Link the current tail to the new process
+        ready.tail = script_new;       // Update tail to the new process
+    }
+    ready.count++;
+    int line_num = 0;
+    while (1)
+    {
+        if (feof(p))
+        {
+            break;
+        }
+        fgets(line, sizeof(line), p);
+        line_num++;
+        add_line_to_script(new_script, line);
+        // printf("This is the line added: %s\n", new_script->head->next->next->line);
+    }
+    fclose(p);
+}
+
+int exec(char *processes[], int numProcesses,char *policy)
+{
+    int errcode = 0;
+    printf("This is numProcesses: %d\n", numProcesses);
+    printf("This is the policy: '%s'\n", policy);
+    for (int i = 0; i < numProcesses; i++)
+    {
+        printf("This is process %d: %s\n", numProcesses, processes[i]);
+    }
+    
+
+    if (!(strcmp(policy, "FCFS") == 0 || strcmp(policy, "SJF") == 0|| strcmp(policy, "RR") == 0 || strcmp(policy, "AGING") == 0))
+    {
+        //printf("This is the policy: '%s'\nand this is value of strcmp(policy, SJF) == 1: %d\n", policy, strcmp(policy, "SJF") == 1);
+        printf ("Error: Invalid Policy\n");
+        return -1;
+    }
+    //printf("This is the policy: '%s'\nand this is value of strcmp(policy, SJF) == 1: %d\n", policy, strcmp(policy, "SJF") == 1);
+
+    if (numProcesses ==1){
+        loadProcessestoMemory(processes[0]);
+        FCFS();
+        return 3;
+    }
+
+    else {
+        for (int i = 0; i < numProcesses; i++)
+        {
+            loadProcessestoMemory(processes[i]);
+        }
+        if (strcmp(policy,"FCFS")==0){
+        FCFS();
+        }
+        else if (strcmp(policy,"SJF")==0){
+            printf ("Have not fully implemented yet... sorry :)\n");
+        }
+        else if (strcmp(policy,"RR")==0){
+            printf ("Have not fully implemented yet... sorry :)\n");
+        }
+        else if (strcmp(policy,"AGING")==0){
+            printf ("Have not fully implemented yet... sorry :)\n");
+        }
+        
+        
+        return errcode;
+    }
+
+}
+
+/* Each exec argument is the name of a different script filename. If two exec arguments are identical,
+the shell displays an error (of your choice) and exec terminates, returning the command prompt to
+the user (or keeps running the remaining instructions, if in batch mode).
+• If there is a code loading error (e.g., running out of space in the shell memory), then no programs run.
+The shell displays an error, the command prompt is returned, and the user will have to input the exec
+command again.*/
 
 void FCFS()
 {

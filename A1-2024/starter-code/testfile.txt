@@ -1,5 +1,6 @@
 echo beautiful
 set var1 sebas
+echo testfile.txt
 print var1
 echo lovely
 set var2 friends
