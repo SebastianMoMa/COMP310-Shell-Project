@@ -62,7 +62,7 @@ int my_touch(char *filename);
 bool isOne(char *word);
 bool isAlphaNum(char *word);
 int badcommandFileDoesNotExist();
-int exec(char *processes[], int numProcesses,char *policy);
+int exec(char *processes[], int numProcesses, char *policy);
 void FCFS();
 
 // Interpret commands and their arguments
@@ -171,11 +171,11 @@ int interpreter(char *command_args[], int args_size)
             return badcommandtooManyProcesses();
         }
         char *processes[args_size - 2];
-        int numProcesses=0;
+        int numProcesses = 0;
         for (int i = 1; i < args_size - 1; i++)
         {
             processes[i - 1] = command_args[i];
-            numProcesses ++;
+            numProcesses++;
         }
         return exec(processes, numProcesses, command_args[args_size - 1]);
     }
@@ -365,8 +365,9 @@ int print(char *var)
     return 0;
 }
 
-int loadProcessestoMemory(char* process){
-    //Implement what I did in run
+int loadProcessestoMemory(char *process)
+{
+    // Implement what I did in run
     int errCode = 0;
     char line[MAX_USER_INPUT];
     FILE *p = fopen(process, "rt"); // the program is in a file
@@ -375,7 +376,7 @@ int loadProcessestoMemory(char* process){
     {
         return badcommandFileDoesNotExist();
     }
-    
+
     struct Script *new_script = create_script(script_count); // Initialize the script
     if (new_script == NULL)
     {
@@ -385,8 +386,8 @@ int loadProcessestoMemory(char* process){
     scripts[script_count % 3] = new_script; // Putting it into the array for scripts, not sure if this is neccesary yet
     script_count++;
 
-    struct PCB *script_new = (struct PCB *)malloc(sizeof(struct PCB));
-    if (script_new == NULL)
+    struct PCB *script_pcb = (struct PCB *)malloc(sizeof(struct PCB));
+    if (script_pcb == NULL)
     {
         fclose(p);
         free_script(new_script); // Free the allocated script memory
@@ -394,23 +395,12 @@ int loadProcessestoMemory(char* process){
         // return memoryAllocationError(); //Don't really have to do this
     }
 
-    script_new->current_instruction = 0;
-    script_new->next = NULL;
-    script_new->pid = ready.count;
-
-    if (ready.head == NULL)
-    {
-        // printf("ready.head == NULL\n");
-        ready.head = script_new;
-        ready.tail = script_new;
-    }
-    else
-    {
-        // printf("ready.head != NULL\n");
-        ready.tail->next = script_new; // Link the current tail to the new process
-        ready.tail = script_new;       // Update tail to the new process
-    }
+    script_pcb->current = new_script->current;
+    script_pcb->next = NULL;
+    script_pcb->pid = ready.count;
+    PCBs[ready.count] = script_pcb;
     ready.count++;
+
     int line_num = 0;
     while (1)
     {
@@ -426,53 +416,56 @@ int loadProcessestoMemory(char* process){
     fclose(p);
 }
 
-int exec(char *processes[], int numProcesses,char *policy)
+int exec(char *processes[], int numProcesses, char *policy)
 {
     int errcode = 0;
     printf("This is numProcesses: %d\n", numProcesses);
     printf("This is the policy: '%s'\n", policy);
     for (int i = 0; i < numProcesses; i++)
     {
-        printf("This is process %d: %s\n", numProcesses, processes[i]);
+        printf("This is process %d: %s\n", i, processes[i]);
     }
-    
 
-    if (!(strcmp(policy, "FCFS") == 0 || strcmp(policy, "SJF") == 0|| strcmp(policy, "RR") == 0 || strcmp(policy, "AGING") == 0))
+    if (!(strcmp(policy, "FCFS") == 0 || strcmp(policy, "SJF") == 0 || strcmp(policy, "RR") == 0 || strcmp(policy, "AGING") == 0))
     {
-        //printf("This is the policy: '%s'\nand this is value of strcmp(policy, SJF) == 1: %d\n", policy, strcmp(policy, "SJF") == 1);
-        printf ("Error: Invalid Policy\n");
-        return -1;
+        // printf("This is the policy: '%s'\nand this is value of strcmp(policy, SJF) == 1: %d\n", policy, strcmp(policy, "SJF") == 1);
+        printf("Error: Invalid Policy\n");
+        return 4;
     }
-    //printf("This is the policy: '%s'\nand this is value of strcmp(policy, SJF) == 1: %d\n", policy, strcmp(policy, "SJF") == 1);
+    // printf("This is the policy: '%s'\nand this is value of strcmp(policy, SJF) == 1: %d\n", policy, strcmp(policy, "SJF") == 1);
 
-    if (numProcesses ==1){
+    if (numProcesses == 1)
+    {
         loadProcessestoMemory(processes[0]);
         FCFS();
         return 3;
     }
 
-    else {
+    else
+    {
         for (int i = 0; i < numProcesses; i++)
         {
             loadProcessestoMemory(processes[i]);
         }
-        if (strcmp(policy,"FCFS")==0){
-        FCFS();
+        if (strcmp(policy, "FCFS") == 0)
+        {
+            FCFS();
         }
-        else if (strcmp(policy,"SJF")==0){
-            printf ("Have not fully implemented yet... sorry :)\n");
+        else if (strcmp(policy, "SJF") == 0)
+        {
+            printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
-        else if (strcmp(policy,"RR")==0){
-            printf ("Have not fully implemented yet... sorry :)\n");
+        else if (strcmp(policy, "RR") == 0)
+        {
+            printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
-        else if (strcmp(policy,"AGING")==0){
-            printf ("Have not fully implemented yet... sorry :)\n");
+        else if (strcmp(policy, "AGING") == 0)
+        {
+            printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
-        
-        
+
         return errcode;
     }
-
 }
 
 /* Each exec argument is the name of a different script filename. If two exec arguments are identical,
@@ -486,6 +479,30 @@ void FCFS()
 {
     // printf("inside FCFS\n");
     // int while_num = 0;
+
+    //This part puts it into the Queue
+    struct PCB *script_pcb = NULL;
+
+    for (int i = 0; i < script_count; i++)
+    {
+        script_pcb = PCBs[i];
+        if (ready.head == NULL)
+        {
+            // printf("ready.head == NULL\n");
+
+            ready.head = script_pcb;
+            ready.tail = script_pcb;
+        }
+        else
+        {
+            // printf("ready.head != NULL\n");
+            ready.tail->next = script_pcb; // Link the current tail to the new process
+            ready.tail = script_pcb;       // Update tail to the new process
+        }
+        ready.count++;
+    }
+    
+
     while (ready.head != NULL)
     {
         // printf("inside FCFS while_loop. while_num = %d\n", while_num);
@@ -494,20 +511,21 @@ void FCFS()
         struct PCB *current_process = ready.head;
         // printf("Current process id: %d\n", current_process->pid);
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
-        // printf("Current script head line: %s\n", current_script->head->line);
+        printf("Current script head line: %s\n", current_script->head->line);
 
         // Ensure we start at the first line of the script
         struct LineNode *current_line_node = current_script->head; // Get current line_node
         int instruction_num = 0;                                   // Local variable for instruction tracking
 
         // Run the process using the current instruction
-        // int while_num2 =0;
+        int while_num2 = 0;
         // printf("this is instruction_num: %d, this is current_script->line_count: %d\n", instruction_num, current_script->line_count);
         while (instruction_num < current_script->line_count && current_line_node != NULL)
         {
             // printf("inside FCFS while_loop's while loop. while_num2 = %d\n", while_num2);
-            // while_num2++;
+            while_num2++;
             char *current_line = current_line_node->line; // Get the current line
+            // printf("Current line_nodeline: %s\n", current_line_node->line);
 
             int errCode = parseInput(current_line); // Process the current line
             if (errCode != 0)
@@ -518,7 +536,9 @@ void FCFS()
 
             // Move to the next instruction
             current_line_node = current_line_node->next; // Advance to next line
-            instruction_num++;                           // Update instruction count
+            // printf("Current line_nodeline after updating to next: %s\n", current_line_node->line);
+
+            instruction_num++; // Update instruction count
         }
 
         // Check if the process is finished
@@ -540,9 +560,12 @@ void FCFS()
     }
 }
 
+void RR()
+{
+}
 int run(char *script)
 {
-    // printf("Got here baby!!\n");
+    printf("Got here baby!!\n");
     int errCode = 0;
     char line[MAX_USER_INPUT];
     FILE *p = fopen(script, "rt"); // the program is in a file
@@ -562,8 +585,8 @@ int run(char *script)
     scripts[script_count % 3] = new_script; // Putting it into the array for scripts, not sure if this is neccesary yet
     script_count++;
 
-    struct PCB *script_new = (struct PCB *)malloc(sizeof(struct PCB));
-    if (script_new == NULL)
+    struct PCB *script_pcb = (struct PCB *)malloc(sizeof(struct PCB));
+    if (script_pcb == NULL)
     {
         fclose(p);
         free_script(new_script); // Free the allocated script memory
@@ -571,23 +594,13 @@ int run(char *script)
         // return memoryAllocationError(); //Don't really have to do this
     }
 
-    script_new->current_instruction = 0;
-    script_new->next = NULL;
-    script_new->pid = ready.count;
-
-    if (ready.head == NULL)
-    {
-        // printf("ready.head == NULL\n");
-        ready.head = script_new;
-        ready.tail = script_new;
-    }
-    else
-    {
-        // printf("ready.head != NULL\n");
-        ready.tail->next = script_new; // Link the current tail to the new process
-        ready.tail = script_new;       // Update tail to the new process
-    }
+    
+    script_pcb->current = new_script->current;
+    script_pcb->next = NULL;
+    script_pcb->pid = ready.count;
+    PCBs[ready.count] = script_pcb;
     ready.count++;
+
     int line_num = 0;
     while (1)
     {

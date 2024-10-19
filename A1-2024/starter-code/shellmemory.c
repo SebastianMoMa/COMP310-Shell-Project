@@ -15,6 +15,7 @@ struct memory_struct shellmemory[MEM_SIZE];
 struct Script *scripts[3];
 int script_count = 0;
 struct ReadyQueue ready;
+struct PCB *PCBs[3];
 
 struct Script *create_script(int id){
     struct Script *new_script = malloc(sizeof(struct Script));
@@ -72,7 +73,7 @@ void free_script(struct Script *script){
     script->tail = NULL;
     script->line_count = 0;
 
-    //free(script);
+    free(script);
 }
 
 // Helper functions

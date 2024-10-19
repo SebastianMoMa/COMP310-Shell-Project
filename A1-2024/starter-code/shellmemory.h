@@ -34,9 +34,10 @@ struct ReadyQueue {
 
 struct PCB {
     int pid; //Should correspond to the unique number in array that holds the specific Process (Script)
-    int current_instruction;
+    struct LineNode *current;
     struct PCB *next; 
 };
+extern struct PCB *PCBs[];
 
 // Function prototypes for creating and managing scripts
 struct Script* create_script(int id);
