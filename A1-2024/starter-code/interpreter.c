@@ -64,6 +64,7 @@ bool isAlphaNum(char *word);
 int badcommandFileDoesNotExist();
 int exec(char *processes[], int numProcesses, char *policy);
 void FCFS();
+void load_queue_FCFS();
 
 // Interpret commands and their arguments
 int interpreter(char *command_args[], int args_size)
@@ -437,6 +438,7 @@ int exec(char *processes[], int numProcesses, char *policy)
     if (numProcesses == 1)
     {
         loadProcessestoMemory(processes[0]);
+        load_queue_FCFS();
         FCFS();
         return 3;
     }
@@ -449,6 +451,7 @@ int exec(char *processes[], int numProcesses, char *policy)
         }
         if (strcmp(policy, "FCFS") == 0)
         {
+            load_queue_FCFS();
             FCFS();
         }
         else if (strcmp(policy, "SJF") == 0)
@@ -475,19 +478,15 @@ the user (or keeps running the remaining instructions, if in batch mode).
 The shell displays an error, the command prompt is returned, and the user will have to input the exec
 command again.*/
 
-void FCFS()
+void load_queue_FCFS()
 {
-    printf("inside FCFS\n");
-    // int while_num = 0;
-
-    //This part puts it into the Queue
     struct PCB *script_pcb = NULL;
     printf("this is script_count: %d\n", script_count);
 
     for (int i = 0; i < script_count; i++)
     {
         script_pcb = PCBs[i];
-        printf("this is PCB %s 1\n", script_pcb);
+        printf("this is PCB %s 1\n", scripts[script_pcb->pid]->head->line);
 
         if (ready.head == NULL)
         {
@@ -502,23 +501,38 @@ void FCFS()
             ready.tail->next = script_pcb; // Link the current tail to the new process
             ready.tail = script_pcb;       // Update tail to the new process
         }
-        ready.count++;
+        //ready.count++;
     }
+}
+
+void FCFS2(){
     
-    printf("we here 2\n");
+}
+
+void FCFS()
+{
+    //printf("inside FCFS\n");
+    // int while_num = 0;
+
+    // This part puts it into the Queue
+
+    //printf("we here 2\n");
     int while_num = 0;
     while (ready.head != NULL)
     {
-         printf("inside FCFS while_loop. while_num = %d\n", while_num);
-         while_num++;
+        //printf("inside FCFS while_loop. while_num = %d\n", while_num);
+        while_num++;
         //  Get the current process from the head
         struct PCB *current_process = ready.head;
-        printf("Current process id: %d\n", current_process->pid);
+        //printf("Current process id: %d\n", current_process->pid);
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
-        printf("Current script head line: %s\n", current_script->head->line);
+        //printf("Current script head line: %s\n", current_script->head->line);
 
         // Ensure we start at the first line of the script
-        struct LineNode *current_line_node = current_script->head; // Get current line_node
+        struct LineNode *current_line_node = current_script->head;
+        if (while_num==0){
+        struct LineNode *current_line_node = current_script->head;} // Get current line_node
+        else current_line_node = current_script->current;
         int instruction_num = 0;                                   // Local variable for instruction tracking
 
         // Run the process using the current instruction
@@ -526,21 +540,21 @@ void FCFS()
         // printf("this is instruction_num: %d, this is current_script->line_count: %d\n", instruction_num, current_script->line_count);
         while (instruction_num < current_script->line_count && current_line_node != NULL)
         {
-             printf("inside FCFS while_loop's while loop. while_num2 = %d\n", while_num2);
+            //printf("inside FCFS while_loop's while loop. while_num2 = %d\n", while_num2);
             while_num2++;
             char *current_line = current_line_node->line; // Get the current line
-             printf("Current line_nodeline: %s\n", current_line_node->line);
+            printf("Current line_nodeline: %s\n", current_line_node->line);
 
             int errCode = parseInput(current_line); // Process the current line
             if (errCode != 0)
             {
-                 fprintf(stderr, "Error processing line: %s\n", current_line);
+                //fprintf(stderr, "Error processing line: %s\n", current_line);
                 //  Exit if there's an error in processing
             }
 
             // Move to the next instruction
             current_line_node = current_line_node->next; // Advance to next line
-             printf("Current line_nodeline after updating to next: %s\n", current_line_node->line);
+            printf("Current line_nodeline after updating to next: %s\n", current_line_node->line);
 
             instruction_num++; // Update instruction count
         }
@@ -550,6 +564,7 @@ void FCFS()
         {
             // Clean up the process
             free_script(current_script);
+            current_script->current = NULL;
             ready.head = current_process->next; // Move to the next process
             int bool_check = ready.head == NULL;
             // printf("Got into instruction_num >= current_script->line_count\nThis is ready.head: %d\n",bool_check);
@@ -570,7 +585,7 @@ void RR()
 
 int run(char *script)
 {
-    //printf("Got here baby!!\n");
+    // printf("Got here baby!!\n");
     int errCode = 0;
     char line[MAX_USER_INPUT];
     FILE *p = fopen(script, "rt"); // the program is in a file
@@ -599,16 +614,16 @@ int run(char *script)
         // return memoryAllocationError(); //Don't really have to do this
     }
 
-    //printf("Got here baby!!\n");
+    // printf("Got here baby!!\n");
 
     script_pcb->current = new_script->current;
     script_pcb->next = NULL;
     script_pcb->pid = ready.count;
-    //printf("Got here baby!!3\n");
+    // printf("Got here baby!!3\n");
     PCBs[ready.count] = script_pcb;
     ready.count++;
 
-    //printf("Got here baby!!\n");
+    // printf("Got here baby!!\n");
     int line_num = 0;
     while (1)
     {
@@ -621,7 +636,7 @@ int run(char *script)
         add_line_to_script(new_script, line);
         // printf("This is the line added: %s\n", new_script->head->next->next->line);
     }
-    //printf("Got here baby!!5\n");
+    // printf("Got here baby!!5\n");
     fclose(p);
 
     FCFS();
