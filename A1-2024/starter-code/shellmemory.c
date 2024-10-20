@@ -27,8 +27,11 @@ struct Script *create_script(int id){
         new_script->tail = NULL;
         new_script->line_count = 0;
         new_script->current = new_script->head;
+        scripts[id % 3] = new_script;
     }
-    scripts[id % 3] = new_script;
+    else {
+        return NULL;
+    }
     return new_script;
 }
 

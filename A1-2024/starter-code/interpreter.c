@@ -1,3 +1,4 @@
+//interpreter.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,8 @@
 #include "shell.h"
 #include "dirent.h"
 #include "ctype.h"
+#include "pcb.h"
+
 // #include "script.h"
 
 int MAX_ARGS_SIZE = 7;
@@ -514,15 +517,11 @@ void FCFS()
     //printf("inside FCFS\n");
     // int while_num = 0;
 
-    // This part puts it into the Queue
-
-    //printf("we here 2\n");
     int while_num = 0;
     while (ready.head != NULL)
     {
         //printf("inside FCFS while_loop. while_num = %d\n", while_num);
         while_num++;
-        //  Get the current process from the head
         struct PCB *current_process = ready.head;
         //printf("Current process id: %d\n", current_process->pid);
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
@@ -585,46 +584,29 @@ void RR()
 
 int run(char *script)
 {
-    // printf("Got here baby!!\n");
     int errCode = 0;
     char line[MAX_USER_INPUT];
-    FILE *p = fopen(script, "rt"); // the program is in a file
+    FILE *p = fopen(script, "rt");
 
     if (p == NULL)
     {
         return badcommandFileDoesNotExist();
     }
-    // Need to find a way to number these for the future ones
-    // The pid is their script_count number
+    
     struct Script *new_script = create_script(script_count); // Initialize the script
     if (new_script == NULL)
     {
         fclose(p);
-        return errCode; // ????
+        return errCode; 
     }
-    scripts[script_count % 3] = new_script; // Putting it into the array for scripts, not sure if this is neccesary yet
-    script_count++;
 
-    struct PCB *script_pcb = (struct PCB *)malloc(sizeof(struct PCB));
+    struct PCB *script_pcb = create_pcb(script_count,new_script->current);
     if (script_pcb == NULL)
     {
         fclose(p);
-        free_script(new_script); // Free the allocated script memory
-        return errCode;          // This needs to be figured out
-        // return memoryAllocationError(); //Don't really have to do this
+        return errCode;
     }
 
-    // printf("Got here baby!!\n");
-
-    script_pcb->current = new_script->current;
-    script_pcb->next = NULL;
-    script_pcb->pid = ready.count;
-    // printf("Got here baby!!3\n");
-    PCBs[ready.count] = script_pcb;
-    ready.count++;
-
-    // printf("Got here baby!!\n");
-    int line_num = 0;
     while (1)
     {
         if (feof(p))
@@ -632,11 +614,9 @@ int run(char *script)
             break;
         }
         fgets(line, sizeof(line), p);
-        line_num++;
         add_line_to_script(new_script, line);
         // printf("This is the line added: %s\n", new_script->head->next->next->line);
     }
-    // printf("Got here baby!!5\n");
     fclose(p);
 
     FCFS();
