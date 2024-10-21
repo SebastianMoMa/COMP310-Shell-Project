@@ -6,8 +6,6 @@ int mem_check_value(char *var_in);
 void mem_set_value(char *var, char *value);
 
 
-
-
 extern int script_count;
 extern struct ReadyQueue ready;
 
@@ -45,3 +43,8 @@ extern struct PCB *PCBs[];
 struct Script* create_script(int id);
 void free_script(struct Script *script);
 void add_line_to_script(struct Script *script, const char *line);
+void free_pcb(struct PCB *pcb);
+void add_to_ready_queue(struct PCB *pcb);
+struct PCB* get_next_process();
+void clean_up_process(struct PCB *pcb);
+void init_scheduler();

@@ -14,8 +14,11 @@ struct memory_struct shellmemory[MEM_SIZE];
 
 struct Script *scripts[3];
 int script_count = 0;
-struct ReadyQueue ready;
+//struct ReadyQueue ready;
 struct PCB *PCBs[3];
+struct ReadyQueue ready = {NULL, NULL, 0}; // Ready queue initialization
+
+
 
 struct Script *create_script(int id){
     struct Script *new_script = malloc(sizeof(struct Script));
@@ -27,6 +30,7 @@ struct Script *create_script(int id){
         new_script->tail = NULL;
         new_script->line_count = 0;
         new_script->current = new_script->head;
+        new_script->current_instruction_num=0;
         scripts[id % 3] = new_script;
     }
     else {
@@ -39,7 +43,6 @@ void add_line_to_script(struct Script *script, const char *line){
     struct LineNode *new_line_node = malloc(sizeof(struct LineNode));
     if (new_line_node != NULL && script->line_count <= 100)
     {
-        if (new_line_node->line != NULL) {
         strncpy(new_line_node->line, line, sizeof(new_line_node->line));
         new_line_node->next = NULL;
 
@@ -47,6 +50,7 @@ void add_line_to_script(struct Script *script, const char *line){
         if (script->head == NULL)
         {
             script->head = new_line_node;
+            script->current=script->head;
         }
         else
         {
@@ -54,7 +58,7 @@ void add_line_to_script(struct Script *script, const char *line){
         }
         script->tail = new_line_node;
         script->line_count++;
-        }
+        
     }
 }
 
@@ -78,6 +82,73 @@ void free_script(struct Script *script){
 
     free(script);
 }
+
+
+// Function to create and initialize a new PCB
+struct PCB *create_pcb(int pid, struct LineNode *head)
+{
+    struct PCB *new_pcb = (struct PCB *)malloc(sizeof(struct PCB));
+    if (new_pcb == NULL)
+    {
+        printf("Error: Memory allocation for PCB failed.\n");
+        return NULL;
+    }
+    new_pcb->pid = pid;
+    new_pcb->current = head;
+    new_pcb->next = NULL; //Should not be head.next
+    PCBs[script_count] = new_pcb;
+    script_count++;
+    return new_pcb;
+}
+
+// Function to free a PCB
+void free_pcb(struct PCB *pcb)
+{
+    if (pcb)
+    {
+        free(pcb);
+    }
+}
+
+void add_to_ready_queue(struct PCB *pcb) {
+    pcb->next = NULL;
+    if (ready.tail) {
+        ready.tail->next = pcb;
+    } else {
+        ready.head = pcb;
+    }
+    ready.tail = pcb;
+    ready.count++;
+}
+
+struct PCB* get_next_process() {
+    //printf("this is ready.head %s\n", ready.head->current->line);
+    if (ready.head == NULL) return NULL;
+    struct PCB *pcb = ready.head;
+    ready.head = ready.head->next;
+    pcb = ready.head;
+    if (ready.head == NULL) {
+        ready.tail = NULL;
+    }
+    ready.count--;
+    return pcb;
+}
+
+void clean_up_process(struct PCB *pcb) {
+    // Free the script associated with the process and the PCB itself
+    if (pcb) {
+        free_script(scripts[pcb->pid]);
+        free_pcb(pcb);
+    }
+}
+
+void init_scheduler() {
+    ready.head = NULL;
+    ready.tail = NULL;
+    ready.count = 0;
+}
+
+
 
 // Helper functions
 int match(char *model, char *var)

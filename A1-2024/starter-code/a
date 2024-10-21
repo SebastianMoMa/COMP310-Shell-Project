@@ -1,0 +1,1 @@
+set x oneline.txt; set y 123; print y; print x

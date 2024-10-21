@@ -1,0 +1,6 @@
+
+set x 1
+
+print x; echo $x;
+
+set y 1
