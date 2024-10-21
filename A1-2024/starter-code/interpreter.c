@@ -394,8 +394,6 @@ int loadProcessestoMemory(char *process)
 
     while (1)//(fgets(line, sizeof(line), p) !=NULL)
     {
-        
-    
         if (fgets(line, sizeof(line), p) ==NULL) {
             add_line_to_script(new_script, " ");
             printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
@@ -660,14 +658,20 @@ int run(char *script)
     //printf("Created PCB with id: %d\n", script_pcb->pid);
     //add_to_ready_queue(script_pcb);
 
-    while (1)
+    while (1)//(fgets(line, sizeof(line), p) !=NULL)
     {
-        if (feof(p))
-        {
-            //printf("End of script file reached.\n");
+        if (fgets(line, sizeof(line), p) ==NULL) {
+            add_line_to_script(new_script, " ");
+            printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
             break;
         }
-        fgets(line, sizeof(line), p);
+        if (feof(p))
+        {
+            //printf("This is last line: %s\n", line);
+            add_line_to_script(new_script, line);            
+            break;
+        }
+        //printf("This is line: %s\n", line);
         add_line_to_script(new_script, line);
         //printf("Added line to script: %s\n", line);
     }
