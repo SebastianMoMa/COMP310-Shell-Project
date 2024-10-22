@@ -5,3 +5,5 @@ my_mkdir $noExistVar
 set dirname not a good name
 my_mkdir $dirname
 my_cd noExistDir
+
+quit

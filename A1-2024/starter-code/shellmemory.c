@@ -86,7 +86,7 @@ void free_script(struct Script *script){
 
 // Function to create and initialize a new PCB
 struct PCB *create_pcb(int pid, struct LineNode *head)
-{
+{ 
     struct PCB *new_pcb = (struct PCB *)malloc(sizeof(struct PCB));
     if (new_pcb == NULL)
     {
@@ -96,7 +96,7 @@ struct PCB *create_pcb(int pid, struct LineNode *head)
     new_pcb->pid = pid;
     new_pcb->current = head;
     new_pcb->next = NULL; //Should not be head.next
-    PCBs[script_count] = new_pcb;
+    PCBs[script_count%3] = new_pcb;
     script_count++;
     return new_pcb;
 }
