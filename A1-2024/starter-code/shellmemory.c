@@ -24,7 +24,7 @@ struct Script *create_script(int id){
     struct Script *new_script = malloc(sizeof(struct Script));
     if (new_script != NULL)
     {
-        new_script->id = id;
+        //new_script->id = id;
         // strncpy(new_script->name, name, sizeof(new_script->name));
         new_script->head = NULL;
         new_script->tail = NULL;
@@ -58,6 +58,7 @@ void add_line_to_script(struct Script *script, const char *line){
         }
         script->tail = new_line_node;
         script->line_count++;
+        script->job_length_score++;
         
     }
 }
@@ -83,7 +84,6 @@ void free_script(struct Script *script){
     free(script);
 }
 
-
 // Function to create and initialize a new PCB
 struct PCB *create_pcb(int pid, struct LineNode *head)
 { 
@@ -97,6 +97,7 @@ struct PCB *create_pcb(int pid, struct LineNode *head)
     new_pcb->current = head;
     new_pcb->next = NULL; //Should not be head.next
     PCBs[script_count%3] = new_pcb;
+    new_pcb->job_length_score=0;
     script_count++;
     return new_pcb;
 }
@@ -148,7 +149,66 @@ void init_scheduler() {
     ready.count = 0;
 }
 
+void swap_scripts(struct Script **a, struct Script **b) {
+    struct Script *temp = *a;
+    *a = *b;
+    *b = temp;
 
+    
+}
+
+void swap_PCBS(struct PCB **a, struct PCB **b) {
+    struct PCB *temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void swap_pids(struct PCB *pcb1, struct PCB *pcb2) {
+    int temp_pid = pcb1->pid;
+    pcb1->pid = pcb2->pid;
+    pcb2->pid = temp_pid;
+}
+
+
+void sortScriptsByLineCount(int size) {
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (scripts[j]->line_count > scripts[j + 1]->line_count) {
+                swap_scripts(&scripts[j], &scripts[j + 1]);
+                //swap_PCBS(&PCBs[j], &PCBs[j+1]);
+               // swap_pids(PCBs[j], PCBs[j+1]);
+            }
+        }
+    }
+}
+
+void printScripts(int size) {
+    for (int i = 0; i < size; i++) {
+        printf("Script %d, Line Count: %d\n", i, scripts[i]->line_count);
+        printf("pid: %d, PCB line_count: %d\n", PCBs[i]->pid,scripts[PCBs[i]->pid]->line_count);
+    }
+}
+
+void printJobLengthScore(int size){
+for (int i = 0; i < size; i++) {
+        printf("Script %d, job_length_score: %d\n", i, scripts[i]->job_length_score);
+        //printf("pid: %d, PCB line_count: %d\n", PCBs[i]->pid,scripts[PCBs[i]->pid]->line_count);
+    }
+}
+
+void InfoAboutPCBsandScripts(int size) {
+    for (int i = 0; i < size; i++) {
+        printf("Script %d, Line Count: %d PCB pid: %d, Script Line Count: %d\n", i, scripts[i]->line_count, PCBs[i]->pid, scripts[PCBs[i]->pid]->line_count);
+        // printf("PCB pid: %d, Script Line Count: %d\n", 
+            //    PCBs[i]->pid, scripts[PCBs[i]->pid]->line_count);
+
+        // Check for mismatches
+        // if (PCBs[i]->pid != i) {
+        //     printf("Warning: PCB pid %d does not match Script id %d at index %d!\n",
+        //            PCBs[i]->pid, i, i);
+        // }
+    }
+}
 
 // Helper functions
 int match(char *model, char *var)

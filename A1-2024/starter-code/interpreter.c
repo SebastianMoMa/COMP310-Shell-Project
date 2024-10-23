@@ -72,6 +72,7 @@ void load_queue_SJF();
 void SJF();
 void swap_scripts(struct Script **a, struct Script **b);
 void RR();
+void Aging();
 
 
 
@@ -248,15 +249,6 @@ int compare(const struct dirent **a, const struct dirent **b)
 {
     if (isdigit((**a).d_name[0]) && isdigit((*b)->d_name[0]))
     {
-        /*
-        if ((**a).d_name[0] > (*b)->d_name[0]) {
-            return -1;
-        }
-        else if ((**a).d_name[0] < (*b)->d_name[0]) {
-            return 1;
-        }
-        else {return 0;}
-        */
         return strcmp((*a)->d_name, (*b)->d_name); // I'm pretty sure this function should just work
     }
     else if (isdigit((*a)->d_name[0]))
@@ -445,7 +437,9 @@ void load_queue_FCFS()
     for (int i = 0; i < script_count; i++)
     {
         script_pcb = PCBs[i];
-        printf("this is PCB %s 1\n", scripts[script_pcb->pid]->head->line);
+        script_pcb->job_length_score=scripts[script_pcb->pid]->job_length_score;
+        printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
+        printf("this is PCB %s\n", scripts[script_pcb->pid]->head->line);
         add_to_ready_queue(script_pcb);
         printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
     }
@@ -510,8 +504,14 @@ int exec(char *processes[], int numProcesses, char *policy)
 
             //printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
-        else if (strcmp(policy, "AGING") == 0)
+        else if (strcmp(policy, "a") == 0)
         {
+            printf("Going into Aging\n");
+            //InfoAboutPCBsandScripts(script_count);
+            load_queue_SJF();
+            //InfoAboutPCBsandScripts(script_count);
+            Aging();
+
             //printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
         //printf("leaving exec\n");
@@ -640,11 +640,10 @@ int while_num = 0;
     script_count = 0;
     ready.head=NULL;
     ready.tail=NULL;
-    //printf("Exiting Scheduler1 function\n");
+    //printf("Exiting RR function\n");
     
   
 }
-
 
 void Scheduler1() //Works for FCFS and SJF
 {
@@ -740,28 +739,151 @@ void Scheduler1() //Works for FCFS and SJF
     //printf("Exiting Scheduler1 function\n");
 }
 
-
-void swap_scripts(struct Script **a, struct Script **b) {
-    struct Script *temp = *a;
-    *a = *b;
-    *b = temp;
+int compare_ints(int a, int b) {
+    return a - b;  // Return negative, 0, or positive
+    // negative means a is smaller, so b is bigger
+    //positive means b is smaller, and yeah a is smaller then
 }
 
-void sortScriptsByLineCount(int size) {
-    for (int i = 0; i < size - 1; i++) {
-        for (int j = 0; j < size - i - 1; j++) {
-            if (scripts[j]->line_count > scripts[j + 1]->line_count) {
-                swap_scripts(&scripts[j], &scripts[j + 1]);
+void AgeJobs(){
+    struct PCB *head = ready.head;
+    struct PCB *tail = ready.tail;
+    if (script_count ==2){
+        head->next->job_length_score--;
+        scripts[head->next->pid]->job_length_score--;
+        if(head->job_length_score < head->next->job_length_score){
+            ready.head = head->next;
+            ready.tail=head;
+            ready.head->next = ready.tail;
+            ready.tail->next = NULL;
+        }
+        //printJobLengthScore(script_count);
+    }
+    else if (script_count ==3){
+        head->next->job_length_score--; // Decrease middle job_length_score
+        scripts[head->next->pid]->job_length_score--;
+        
+        tail->job_length_score--;
+        scripts[tail->pid]->job_length_score--;
+        // Below tells us which of the two non-head PCBs's have lower job_length_score
+        int to_check = compare_ints(head->next->job_length_score,tail->job_length_score);
+        if (to_check <0 || to_check ==0){ //so middle is smaller
+            if(head->job_length_score < head->next->job_length_score){
+            shift_queue();
+        }
+        }
+        else { //tail is smaller
+            if(head->job_length_score < tail->job_length_score){
+            ready.head = tail;
+            ready.head->next = head->next;
+            ready.tail = head;
+            ready.head->next->next=ready.tail;
+            ready.tail->next = NULL;
             }
         }
+    //printJobLengthScore(script_count);
+    //printf("This is order of process: head pid:%d, middle pid: %d, tail pid: %d\n", ready.head->pid,ready.head->next->pid,ready.tail->pid);
+
     }
+
+
 }
 
-void printScripts(int size) {
-    for (int i = 0; i < size; i++) {
-        printf("Script ID: %d, Line Count: %d\n", scripts[i]->id, scripts[i]->line_count);
+void Aging(){
+int while_num = 0;
+    //struct PCB *current_process = ready.head;
+    while (ready.head != NULL)
+    {
+        struct PCB *current_process = ready.head;
+        // printf("Inside Aging while_loop. while_num = %d\n", while_num);
+        while_num++;
+        // Check if current_process is valid
+        if (current_process != NULL)
+        {
+            // printf("Current process id: %d\n", current_process->pid);
+        }
+        else
+        {
+            // printf("No current process found.\n");
+            break; // Prevent dereferencing NULL
+        }
+        struct Script *current_script = scripts[current_process->pid]; // Get the process from array
+        // printf("Current script line: %s\n", current_script->current->line);
+        struct LineNode *current_line_node = current_script->current;
+        int instruction_num = current_script->current_instruction_num; // Local variable for instruction tracking
+        // printf("Current script line_num: %d\n", instruction_num);
+
+        int while_num2 = 0;
+        // printf("Current script line count: %d\n", current_script->line_count);
+        while (instruction_num < current_script->line_count && current_line_node != NULL && while_num2!=1)
+        {
+            // printf("Inside Aging inner while loop. while_num2 = %d\n", while_num2);
+            while_num2++;
+
+            char *current_line = current_line_node->line; // Get the current line
+            // printf("Current line_node line: %s\n", current_line_node->line);
+
+            int errCode = parseInput(current_line); // Process the current line
+            // printf("Parsed line with error code: %d\n", errCode);
+            if (errCode != 0)
+            {
+                // Print an error message for debugging
+                // f//printf(stderr, "Error processing line: %s\n", current_line);
+            }
+            current_line_node = current_line_node->next; // Advance to next line
+            if (current_line_node != NULL)
+            {
+                // printf("Current line_node after updating to next: %s\n", current_line_node->line);
+            }
+            else
+            {
+                // printf("No next line_node found, reached the end of the script.\n");
+            }
+            //instruction_num++; // Update instruction count
+            current_script->current = current_line_node;
+            current_script->current_instruction_num ++;
+            instruction_num= current_script->current_instruction_num;
+        }
+        // printf("Finished processing script for process id: %d\n", current_process->pid);
+        // printf("Total instructions executed: %d\n", instruction_num);
+        if (current_script->current_instruction_num >= current_script->line_count)
+        {
+            // printf("Cleaning up process id: %d\n", current_process->pid);
+            // printf("Is ready.head == NULL: %d\n", ready.head == NULL); //1 if true
+            current_script->current = NULL;
+            struct PCB *new_process = get_next_process();
+            clean_up_process(current_process);
+            script_count--;
+            current_process = new_process; // Move to the next process
+            ////printf("Moving to next process id: %d\n", current_process->pid);
+
+            if (current_process != NULL)
+            {
+                if(!(new_process->pid == 0 || new_process->pid == 1 || new_process->pid == 2)){
+                new_process = NULL;
+                break;
+            }
+                //printf("Moving to next process id: %d\n", current_process->pid);
+            }
+            else
+            {
+                //printf("No more processes in the ready queue.\n");
+            }
+        }
+        else
+        {
+            // printf("Shifting ready queue.\n");
+
+           AgeJobs();
+        }
+        
     }
+    script_count = 0;
+    ready.head=NULL;
+    ready.tail=NULL;
+    printf("Finished Aging\n");
 }
+
 
 void load_queue_SJF()
 {
@@ -772,14 +894,19 @@ void load_queue_SJF()
     printf("this is script_count: %d\n", script_count);
 
     sortScriptsByLineCount(script_count);
-    printScripts(script_count);
+    InfoAboutPCBsandScripts(script_count);
 
-    for (int i = 0; i < script_count; i++)
+    //printScripts(script_count);
+
+
+    for (int i = 0; i <script_count; i++)
     {
         script_pcb = PCBs[i];
-        printf("this is PCB head line: %s 1\n", scripts[script_pcb->pid]->head->line);
+        script_pcb->job_length_score=scripts[script_pcb->pid]->job_length_score;
+        //printf("this is pid: %d's job_length_score %d\n", script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
+        //printf("this is pid: %d's head line: %s\n", script_pcb->pid, scripts[script_pcb->pid]->head->line);
         add_to_ready_queue(script_pcb);
-        printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
+        //printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
     }
     //printf("leaving load_queue_FCFS\n");
 }
@@ -825,7 +952,7 @@ int run(char *script)
     {
         if (fgets(line, sizeof(line), p) ==NULL) {
             add_line_to_script(new_script, " ");
-            printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
+            //printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
             break;
         }
         if (feof(p))

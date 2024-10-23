@@ -16,12 +16,13 @@ struct LineNode {
 
 
 struct Script {
-    int id;
+    //int id;
     struct LineNode *head;     
     struct LineNode *tail;
     struct LineNode *current;
     int current_instruction_num;     
-    int line_count;            
+    int line_count;
+    int job_length_score;  
 };
 
 extern struct Script *scripts[];
@@ -35,7 +36,8 @@ struct ReadyQueue {
 struct PCB {
     int pid; //Should correspond to the unique number in array that holds the specific Process (Script)
     struct LineNode *current;
-    struct PCB *next; 
+    struct PCB *next;
+    int job_length_score;
 };
 extern struct PCB *PCBs[];
 
@@ -48,3 +50,12 @@ void add_to_ready_queue(struct PCB *pcb);
 struct PCB* get_next_process();
 void clean_up_process(struct PCB *pcb);
 void init_scheduler();
+void swap_scripts(struct Script **a, struct Script **b);
+void sortScriptsByLineCount(int size);
+void printScripts(int size);
+void printJobLengthScore(int size);
+void InfoAboutPCBsandScripts(int size);
+
+
+
+
