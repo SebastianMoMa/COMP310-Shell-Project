@@ -476,7 +476,7 @@ int exec(char *processes[], int numProcesses, char *policy)
     }
     else
     {
-        printf("Loading multiple processes...\n");
+        //printf("Loading multiple processes...\n");
         for (int i = 0; i < numProcesses; i++)
         {
             loadProcessestoMemory(processes[i]);
@@ -489,7 +489,7 @@ int exec(char *processes[], int numProcesses, char *policy)
         }
         else if (strcmp(policy, "s") == 0)
         {
-            printf("Executing SJF for multiple processes.\n");
+            //printf("Executing SJF for multiple processes.\n");
 
             load_queue_SJF();
             Scheduler1();
@@ -497,7 +497,7 @@ int exec(char *processes[], int numProcesses, char *policy)
         }
         else if (strcmp(policy, "r") == 0)
         {
-            printf("Going into RR\n");
+            //printf("Going into RR\n");
             load_queue_FCFS();
             RR();
             //Need a function here to 2 lines at a time of code
@@ -506,7 +506,7 @@ int exec(char *processes[], int numProcesses, char *policy)
         }
         else if (strcmp(policy, "a") == 0)
         {
-            printf("Going into Aging\n");
+            //printf("Going into Aging\n");
             //InfoAboutPCBsandScripts(script_count);
             load_queue_SJF();
             //InfoAboutPCBsandScripts(script_count);
@@ -898,20 +898,20 @@ int original_script_count = script_count;
     script_count = 0;
     ready.head=NULL;
     ready.tail=NULL;
-    printf("Finished Aging\n");
+    //printf("Finished Aging\n");
 }
 
 
 void load_queue_SJF()
 {
-    printf("inside load_queue_SJF\n");
+    //printf("inside load_queue_SJF\n");
 
     struct PCB *script_pcb = NULL;
 
-    printf("this is script_count: %d\n", script_count);
+    //printf("this is script_count: %d\n", script_count);
 
     sortScriptsByLineCount(script_count);
-    InfoAboutPCBsandScripts(script_count);
+    //InfoAboutPCBsandScripts(script_count);
 
     //printScripts(script_count);
 
