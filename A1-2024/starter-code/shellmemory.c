@@ -32,6 +32,7 @@ struct Script *create_script(int id){
         new_script->current = new_script->head;
         new_script->current_instruction_num=0;
         scripts[id % 3] = new_script;
+        new_script->job_length_score=0;
     }
     else {
         return NULL;

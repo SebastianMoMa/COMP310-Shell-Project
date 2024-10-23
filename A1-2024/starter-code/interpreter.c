@@ -472,7 +472,7 @@ int exec(char *processes[], int numProcesses, char *policy)
         load_queue_FCFS();
         //printf("Executing Scheduler1 for single process.\n");
         Scheduler1();
-        return 3;
+        return 0;
     }
     else
     {
@@ -746,12 +746,16 @@ int compare_ints(int a, int b) {
 }
 
 void AgeJobs(){
+    //printJobLengthScore(script_count);
     struct PCB *head = ready.head;
     struct PCB *tail = ready.tail;
     if (script_count ==2){
+    
+        if (head->next->job_length_score>0){
         head->next->job_length_score--;
         scripts[head->next->pid]->job_length_score--;
-        if(head->job_length_score < head->next->job_length_score){
+        }
+        if(head->job_length_score > head->next->job_length_score){
             ready.head = head->next;
             ready.tail=head;
             ready.head->next = ready.tail;
@@ -760,20 +764,23 @@ void AgeJobs(){
         //printJobLengthScore(script_count);
     }
     else if (script_count ==3){
+        if (head->next->job_length_score>0){
         head->next->job_length_score--; // Decrease middle job_length_score
         scripts[head->next->pid]->job_length_score--;
-        
+        }
+        if (tail->job_length_score>0){
         tail->job_length_score--;
         scripts[tail->pid]->job_length_score--;
+        }
         // Below tells us which of the two non-head PCBs's have lower job_length_score
         int to_check = compare_ints(head->next->job_length_score,tail->job_length_score);
         if (to_check <0 || to_check ==0){ //so middle is smaller
-            if(head->job_length_score < head->next->job_length_score){
+            if(head->job_length_score > head->next->job_length_score){
             shift_queue();
         }
         }
         else { //tail is smaller
-            if(head->job_length_score < tail->job_length_score){
+            if(head->job_length_score > tail->job_length_score){
             ready.head = tail;
             ready.head->next = head->next;
             ready.tail = head;
@@ -781,26 +788,25 @@ void AgeJobs(){
             ready.tail->next = NULL;
             }
         }
-    //printJobLengthScore(script_count);
+    
     //printf("This is order of process: head pid:%d, middle pid: %d, tail pid: %d\n", ready.head->pid,ready.head->next->pid,ready.tail->pid);
-
     }
-
-
+    
 }
 
 void Aging(){
 int while_num = 0;
+int original_script_count = script_count;
     //struct PCB *current_process = ready.head;
     while (ready.head != NULL)
     {
         struct PCB *current_process = ready.head;
-        // printf("Inside Aging while_loop. while_num = %d\n", while_num);
+        //printf("Inside Aging while_loop. while_num = %d\n", while_num);
         while_num++;
         // Check if current_process is valid
         if (current_process != NULL)
         {
-            // printf("Current process id: %d\n", current_process->pid);
+             //printf("Current process id: %d\n", current_process->pid);
         }
         else
         {
@@ -817,7 +823,7 @@ int while_num = 0;
         // printf("Current script line count: %d\n", current_script->line_count);
         while (instruction_num < current_script->line_count && current_line_node != NULL && while_num2!=1)
         {
-            // printf("Inside Aging inner while loop. while_num2 = %d\n", while_num2);
+             //printf("Inside Aging inner while loop. while_num2 = %d\n", while_num2);
             while_num2++;
 
             char *current_line = current_line_node->line; // Get the current line
@@ -851,10 +857,17 @@ int while_num = 0;
             // printf("Cleaning up process id: %d\n", current_process->pid);
             // printf("Is ready.head == NULL: %d\n", ready.head == NULL); //1 if true
             current_script->current = NULL;
+            //printf("Before Aging:\n");
+            //printJobLengthScore(original_script_count);
+            AgeJobs();
             struct PCB *new_process = get_next_process();
             clean_up_process(current_process);
             script_count--;
             current_process = new_process; // Move to the next process
+            
+            //AgeJobs();
+            // printf("After Aging:\n");
+            // printJobLengthScore(original_script_count);
             ////printf("Moving to next process id: %d\n", current_process->pid);
 
             if (current_process != NULL)
@@ -872,9 +885,13 @@ int while_num = 0;
         }
         else
         {
-            // printf("Shifting ready queue.\n");
+            // printf("Before Aging:\n");
+            // printJobLengthScore(original_script_count);
 
-           AgeJobs();
+            AgeJobs();
+            // printf("After Aging:\n");
+            // printJobLengthScore(original_script_count);
+           //printJobLengthScore(script_count);
         }
         
     }
