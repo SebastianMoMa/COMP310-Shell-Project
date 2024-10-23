@@ -1,0 +1,4 @@
+echo AGING
+exec P_file1 P_file2 P_file3 a
+echo SJF
+exec P_file1 P_file2 P_file3 s
