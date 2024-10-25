@@ -1,2 +1,0 @@
-echo ag4
-run ../test-cases/T_AGING4.txt

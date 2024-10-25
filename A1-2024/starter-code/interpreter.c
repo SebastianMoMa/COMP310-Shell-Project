@@ -459,7 +459,7 @@ int exec(char *processes[], int numProcesses, char *policy)
     }
 
     //if (!(strcmp(policy, "Scheduler1") == 0 || strcmp(policy, "SJF") == 0 || strcmp(policy, "RR") == 0 || strcmp(policy, "AGING") == 0))
-    if (!(strcmp(policy, "f") == 0 || strcmp(policy, "s") == 0 || strcmp(policy, "r") == 0 || strcmp(policy, "a") == 0))
+    if (!(strcmp(policy, "FCFS") == 0 || strcmp(policy, "SJF") == 0 || strcmp(policy, "RR") == 0 || strcmp(policy, "AGING") == 0))
     {
         //printf("Error: Invalid Policy\n");
         return 4;
@@ -481,13 +481,13 @@ int exec(char *processes[], int numProcesses, char *policy)
         {
             loadProcessestoMemory(processes[i]);
         }
-        if (strcmp(policy, "f") == 0)
+        if (strcmp(policy, "FCFS") == 0)
         {
             load_queue_FCFS();
             //printf("Executing Scheduler1 for multiple processes.\n");
             Scheduler1();
         }
-        else if (strcmp(policy, "s") == 0)
+        else if (strcmp(policy, "SJF") == 0)
         {
             //printf("Executing SJF for multiple processes.\n");
 
@@ -495,7 +495,7 @@ int exec(char *processes[], int numProcesses, char *policy)
             Scheduler1();
             //printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
-        else if (strcmp(policy, "r") == 0)
+        else if (strcmp(policy, "RR") == 0)
         {
             //printf("Going into RR\n");
             load_queue_FCFS();
@@ -504,7 +504,7 @@ int exec(char *processes[], int numProcesses, char *policy)
 
             //printf("Have not fully implemented %s yet... sorry :)\n", policy);
         }
-        else if (strcmp(policy, "a") == 0)
+        else if (strcmp(policy, "AGING") == 0)
         {
             //printf("Going into Aging\n");
             //InfoAboutPCBsandScripts(script_count);
@@ -857,17 +857,17 @@ int original_script_count = script_count;
             // printf("Cleaning up process id: %d\n", current_process->pid);
             // printf("Is ready.head == NULL: %d\n", ready.head == NULL); //1 if true
             current_script->current = NULL;
-            //printf("Before Aging:\n");
-            //printJobLengthScore(original_script_count);
+            printf("Before Aging:\n");
+            printJobLengthScore(original_script_count);
             AgeJobs();
             struct PCB *new_process = get_next_process();
             clean_up_process(current_process);
             script_count--;
             current_process = new_process; // Move to the next process
             
-            //AgeJobs();
-            // printf("After Aging:\n");
-            // printJobLengthScore(original_script_count);
+            AgeJobs();
+            printf("After Aging:\n");
+            printJobLengthScore(original_script_count);
             ////printf("Moving to next process id: %d\n", current_process->pid);
 
             if (current_process != NULL)
@@ -885,12 +885,12 @@ int original_script_count = script_count;
         }
         else
         {
-            // printf("Before Aging:\n");
-            // printJobLengthScore(original_script_count);
+            printf("Before Aging:\n");
+            printJobLengthScore(original_script_count);
 
             AgeJobs();
-            // printf("After Aging:\n");
-            // printJobLengthScore(original_script_count);
+            printf("After Aging:\n");
+            printJobLengthScore(original_script_count);
            //printJobLengthScore(script_count);
         }
         

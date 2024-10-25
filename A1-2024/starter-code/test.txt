@@ -1,0 +1,3 @@
+set x T_FCFS.txt
+print x
+run ../test-cases/T_FCFS.txt
