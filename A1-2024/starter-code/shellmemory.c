@@ -1,3 +1,4 @@
+//shellmemory.c
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -33,6 +34,7 @@ struct Script *create_script(int id){
         new_script->current_instruction_num=0;
         scripts[id % 3] = new_script;
         new_script->job_length_score=0;
+        
     }
     else {
         return NULL;
@@ -100,6 +102,7 @@ struct PCB *create_pcb(int pid, struct LineNode *head)
     PCBs[script_count%3] = new_pcb;
     new_pcb->job_length_score=0;
     script_count++;
+    new_pcb->enqueued = 0;
     return new_pcb;
 }
 
@@ -135,6 +138,106 @@ struct PCB* get_next_process() {
     ready.count--;
     return pcb;
 }
+
+void Once_Done_AGING() {
+    struct PCB *old_head = ready.head;
+
+    //First we decrease the job_length score
+    //One Script
+    if (old_head->next == NULL) {
+        ready.head = NULL;
+        ready.tail = NULL;
+        free(old_head); // Clean up the old head
+        return;
+    }
+
+    if (script_count==2){
+        if (old_head->next->job_length_score > 0)
+        {
+            old_head->next->job_length_score--;
+            scripts[old_head->next->pid]->job_length_score--;
+        }
+    }
+    else if (script_count ==3){
+        if (old_head->next->job_length_score > 0)
+        {
+            old_head->next->job_length_score--; // Decrease middle job_length_score
+            scripts[old_head->next->pid]->job_length_score--;
+        }
+        if (ready.tail->job_length_score > 0)
+        {
+            ready.tail->job_length_score--;
+            scripts[ready.tail->pid]->job_length_score--;
+        }
+    }
+
+    //Remove head from Queue
+    ready.head = ready.head->next;
+    script_count --;
+    if (ready.head == NULL) {
+        ready.tail = NULL;
+    }
+    clean_up_process(old_head);
+
+    //Restructure the Queue, for lowest job_length_score at head
+    if (script_count == 2){ // This case means that it was three and just got decreased
+        int compare = ready.head->job_length_score - ready.tail->job_length_score; // Should be same if you put ready.next instead of ready.tail
+        if (compare > 0){
+            //If tail has lower score, than put it at head
+            ready.head = ready.tail;
+            ready.head->next = old_head->next;
+            ready.tail = ready.head->next;
+            ready.tail->next = NULL;
+        }
+    }
+    // We do not have to worry if script_count == 1
+
+
+
+
+}
+
+void Once_Script_done_AGING() {
+    // If only one script remains, no need for aging or reordering
+    if (script_count == 1) {
+        ready.count--; // Decrement the script count in the ready queue
+        return;
+    }
+
+    struct PCB *old_head = ready.head; // Store the current head for later cleanup
+
+    if (script_count == 2) {
+        // If there are two scripts, simply promote the second script to head
+        ready.head = ready.head->next;
+        ready.tail = old_head; // The old head becomes the new tail
+        ready.tail->next = NULL; // Ensure the new tail points to NULL
+    } else if (script_count == 3) {
+        // If there are three scripts, age the remaining two and reorder
+
+        // Age the remaining scripts (not the head)
+        ready.head->next->job_length_score--;
+        scripts[ready.head->next->pid]->job_length_score--;
+        ready.tail->job_length_score--;
+        scripts[ready.tail->pid]->job_length_score--;
+
+        // Compare the scores of the remaining two scripts
+        if (ready.head->next->job_length_score <= ready.tail->job_length_score) {
+            // If the middle script has a lower or equal score, promote it
+            ready.head = ready.head->next;
+            ready.tail = ready.tail->next; // Old tail becomes new tail
+        } else {
+            // Otherwise, promote the tail script
+            struct PCB *temp = ready.tail;
+            ready.tail = ready.head->next; // Old middle becomes new tail
+            ready.head = temp; // Old tail becomes new head
+        }
+        ready.tail->next = NULL; // Ensure the new tail points to NULL
+    }
+
+    ready.count--; // Decrement the script count in the ready queue
+    clean_up_process(old_head); // Clean up the finished script
+}
+
 
 void clean_up_process(struct PCB *pcb) {
     // Free the script associated with the process and the PCB itself

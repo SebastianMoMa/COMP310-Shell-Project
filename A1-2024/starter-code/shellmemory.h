@@ -22,7 +22,7 @@ struct Script {
     struct LineNode *current;
     int current_instruction_num;     
     int line_count;
-    int job_length_score;  
+    int job_length_score;
 };
 
 extern struct Script *scripts[];
@@ -38,6 +38,7 @@ struct PCB {
     struct LineNode *current;
     struct PCB *next;
     int job_length_score;
+    int enqueued;
 };
 extern struct PCB *PCBs[];
 
@@ -55,6 +56,8 @@ void sortScriptsByLineCount(int size);
 void printScripts(int size);
 void printJobLengthScore(int size);
 void InfoAboutPCBsandScripts(int size);
+void Once_Script_done_AGING();
+void Once_Done_AGING();
 
 
 

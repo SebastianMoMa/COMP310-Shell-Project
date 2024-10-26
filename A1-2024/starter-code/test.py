@@ -38,8 +38,8 @@ def run_test(
 ) -> bool:
     executable = os.path.realpath(prog)
     cur_dir = os.getcwd()
-    test_name = test_file.rstrip(".txt")
-
+    #test_name = test_file.rstrip(".txt")
+    test_name = test_file.removesuffix(".txt")
     print(f"{NC}Running {test_name}...", end="")
     os.chdir(test_dir)
 
@@ -56,7 +56,7 @@ def run_test(
         )
         if test_name not in non_deterministic:
             res = subprocess.run(
-                ["diff", "-w", "-y", "--color=always", result, "-"],
+                ["diff", "-b", "-w", "-y", "--color=always", result, "-"],
                 input=shell_res.stdout,
                 capture_output=True,
             )
@@ -81,15 +81,16 @@ def run_test(
     if passed:
         print(f"{GREEN} Passed")
     else:
-        print(f"{RED} Failed\n---Diff---{NC}")
-        print(diff)
-        print(f"{RED}---End diff---{NC}")
+        print(f"{RED} Failed{NC}")
+        #print(f"{RED} Failed\n---Diff---{NC}")
+        #print(diff)
+        #print(f"{RED}---End diff---{NC}")
 
     os.chdir(cur_dir)
 
     return passed
 
-
+#/
 def run_multiple(prog: str, test_dir: str, non_deterministic: set[str]):
     def is_test(f):
         return (
@@ -113,6 +114,9 @@ def run_multiple(prog: str, test_dir: str, non_deterministic: set[str]):
     print(f"{GREEN}Passed: {passed}")
     print(f"{RED}Failed: {failed}")
     print(f"{NC}Total: {len(tests)}")
+
+
+
 
 
 def main():
