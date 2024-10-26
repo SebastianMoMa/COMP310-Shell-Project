@@ -13,10 +13,10 @@ struct memory_struct
 
 struct memory_struct shellmemory[MEM_SIZE];
 
-struct Script *scripts[3];
+struct Script *scripts[10];
 int script_count = 0;
 //struct ReadyQueue ready;
-struct PCB *PCBs[3];
+struct PCB *PCBs[10];
 struct ReadyQueue ready = {NULL, NULL, 0}; // Ready queue initialization
 
 
@@ -32,7 +32,7 @@ struct Script *create_script(int id){
         new_script->line_count = 0;
         new_script->current = new_script->head;
         new_script->current_instruction_num=0;
-        scripts[id % 3] = new_script;
+        scripts[id % 10] = new_script;
         new_script->job_length_score=0;
         
     }
@@ -99,7 +99,7 @@ struct PCB *create_pcb(int pid, struct LineNode *head)
     new_pcb->pid = pid;
     new_pcb->current = head;
     new_pcb->next = NULL; //Should not be head.next
-    PCBs[script_count%3] = new_pcb;
+    PCBs[script_count%10] = new_pcb;
     new_pcb->job_length_score=0;
     script_count++;
     new_pcb->enqueued = 0;
@@ -197,46 +197,6 @@ void Once_Done_AGING() {
 
 }
 
-void Once_Script_done_AGING() {
-    // If only one script remains, no need for aging or reordering
-    if (script_count == 1) {
-        ready.count--; // Decrement the script count in the ready queue
-        return;
-    }
-
-    struct PCB *old_head = ready.head; // Store the current head for later cleanup
-
-    if (script_count == 2) {
-        // If there are two scripts, simply promote the second script to head
-        ready.head = ready.head->next;
-        ready.tail = old_head; // The old head becomes the new tail
-        ready.tail->next = NULL; // Ensure the new tail points to NULL
-    } else if (script_count == 3) {
-        // If there are three scripts, age the remaining two and reorder
-
-        // Age the remaining scripts (not the head)
-        ready.head->next->job_length_score--;
-        scripts[ready.head->next->pid]->job_length_score--;
-        ready.tail->job_length_score--;
-        scripts[ready.tail->pid]->job_length_score--;
-
-        // Compare the scores of the remaining two scripts
-        if (ready.head->next->job_length_score <= ready.tail->job_length_score) {
-            // If the middle script has a lower or equal score, promote it
-            ready.head = ready.head->next;
-            ready.tail = ready.tail->next; // Old tail becomes new tail
-        } else {
-            // Otherwise, promote the tail script
-            struct PCB *temp = ready.tail;
-            ready.tail = ready.head->next; // Old middle becomes new tail
-            ready.head = temp; // Old tail becomes new head
-        }
-        ready.tail->next = NULL; // Ensure the new tail points to NULL
-    }
-
-    ready.count--; // Decrement the script count in the ready queue
-    clean_up_process(old_head); // Clean up the finished script
-}
 
 
 void clean_up_process(struct PCB *pcb) {

@@ -65,7 +65,7 @@ int my_touch(char *filename);
 bool isOne(char *word);
 bool isAlphaNum(char *word);
 int badcommandFileDoesNotExist();
-int exec(char *processes[], int numProcesses, char *policy);
+int exec(char *processes[], int numProcesses, char *policy, int isBackground);
 void Scheduler1();
 void load_queue_FCFS();
 void load_queue_SJF();
@@ -175,18 +175,24 @@ int interpreter(char *command_args[], int args_size)
     }
     else if (strcmp(command_args[0], "exec") == 0)
     {
-        if (args_size > 5)
+        if (args_size > 6)
         {
             return badcommandtooManyProcesses();
         }
-        char *processes[args_size - 2];
+
+        int isBackground = 0;
+        if (strcmp(command_args[args_size - 1], "#") == 0)
+            isBackground = 1;
+
+        char *processes[args_size - 2 - isBackground];
         int numProcesses = 0;
-        for (int i = 1; i < args_size - 1; i++)
+        for (int i = 1; i < args_size - 1 - isBackground; i++)
         {
             processes[i - 1] = command_args[i];
             numProcesses++;
         }
-        return exec(processes, numProcesses, command_args[args_size - 1]);
+        return exec(processes, numProcesses, command_args[args_size - 1], isBackground);
+        // return exec(processes, numProcesses, command_args[args_size - 1]);
     }
 
     else
@@ -445,7 +451,77 @@ void load_queue_FCFS()
     // printf("leaving load_queue_FCFS\n");
 }
 
-int exec(char *processes[], int numProcesses, char *policy)
+void load_hashtag(char *process)
+{
+    // printf("Inside loadProcessestoMemory\n");
+    // printf("loading script: %s\n", process);
+    int errCode = 0;
+    char line[MAX_USER_INPUT];
+    FILE *p = fopen(process, "rt");
+
+    if (p == NULL)
+    {
+        // f//printf(stderr, "Failed to open script file: %s\n", process);
+        return badcommandFileDoesNotExist();
+    }
+
+    struct Script *new_script = create_script(script_count);  // Initialize the script
+    struct Script *new_script2 = create_script(script_count); // Initialize the script
+
+    if (new_script == NULL)
+    {
+        fclose(p);
+        // f//printf(stderr, "Failed to create new script\n");
+        return errCode;
+    }
+    // printf("Created new script with count: %d\n", script_count);
+
+    while (1) //(fgets(line, sizeof(line), p) !=NULL)
+    {
+        if (fgets(line, sizeof(line), p) == NULL)
+        {
+            // This tells us that the script has a blankline at the end and we still want to get that into the script for an error
+            add_line_to_script(new_script, " ");
+            printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
+            break;
+        }
+        if (feof(p))
+        {
+            // printf("This is last line: %s\n", line);
+
+            add_line_to_script(new_script, line);
+            break;
+        }
+        // printf("This is line: %s\n", line);
+        if (strrchr(line, "#") != NULL)
+        {
+            add_line_to_script(new_script, line);
+        }
+        else {
+            add_line_to_script(new_script2,line);
+        }
+        // printf("Added line to script: %s\n", line);
+    }
+    struct PCB *script_pcb = create_pcb(script_count, new_script->current);
+    struct PCB *script_pcb = create_pcb(script_count, new_script->current);
+
+    if (script_pcb == NULL)
+    {
+        fclose(p);
+        // f//printf(stderr, "Failed to create PCB for script\n");
+        return errCode;
+    }
+    // printf("script_count: %d\n", script_count);
+
+    // printf("Created PCB with id: %d\n", script_pcb->pid);
+    // add_to_ready_queue(script_pcb);
+    // struct PCB *for_pcb = ready.head;
+    // printf("leaving loadProcessestoMemory\n");
+
+    fclose(p);
+}
+
+int exec(char *processes[], int numProcesses, char *policy, int isBackground)
 {
     // printf("Inside exec\n");
 
@@ -478,6 +554,8 @@ int exec(char *processes[], int numProcesses, char *policy)
         // printf("Error: Invalid Policy\n");
         return 4;
     }
+
+    // Do some function for ###
 
     if (numProcesses == 1)
     {
@@ -513,6 +591,7 @@ int exec(char *processes[], int numProcesses, char *policy)
         {
             // printf("Going into RR\n");
             load_queue_FCFS();
+
             RR();
             // Need a function here to 2 lines at a time of code
 
@@ -765,9 +844,7 @@ int compare_ints(int a, int b)
 
 int AgeJobs()
 {
-    // printJobLengthScore(script_count);
 
-    // ready.head->enqueued = 1;
     struct PCB *head = ready.head;
     struct PCB *tail = ready.tail;
     // printf("Got here in agejobs. Script_count: %d\n", script_count);
