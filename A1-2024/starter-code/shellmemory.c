@@ -11,6 +11,7 @@ struct memory_struct
     char *value;
 };
 
+
 struct memory_struct shellmemory[MEM_SIZE];
 
 struct Script *scripts[10];
@@ -43,6 +44,8 @@ struct Script *create_script(int id){
 }
 
 void add_line_to_script(struct Script *script, const char *line){
+        // printf("Got into add_line_Script");
+
     struct LineNode *new_line_node = malloc(sizeof(struct LineNode));
     if (new_line_node != NULL && script->line_count <= 100)
     {
@@ -64,6 +67,7 @@ void add_line_to_script(struct Script *script, const char *line){
         script->job_length_score++;
         
     }
+    // printf("Got out of add_line_Script");
 }
 
 void free_script(struct Script *script){

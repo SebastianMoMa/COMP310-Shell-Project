@@ -58,7 +58,7 @@ void printJobLengthScore(int size);
 void InfoAboutPCBsandScripts(int size);
 void Once_Script_done_AGING();
 void Once_Done_AGING();
-
+struct PCB *create_pcb(int pid, struct LineNode *head);
 
 
 
