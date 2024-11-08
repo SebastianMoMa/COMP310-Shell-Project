@@ -22,7 +22,7 @@ struct ReadyQueue ready = {NULL, NULL, 0}; // Ready queue initialization
 
 
 
-struct Script *create_script(int id){
+struct Script *create_script(int id, char *name){
     struct Script *new_script = malloc(sizeof(struct Script));
     if (new_script != NULL)
     {
@@ -35,12 +35,25 @@ struct Script *create_script(int id){
         new_script->current_instruction_num=0;
         scripts[id % 10] = new_script;
         new_script->job_length_score=0;
+        new_script->name = name;
         
     }
     else {
         return NULL;
     }
     return new_script;
+}
+
+//Made for case where two processes have same name
+int lookForName (int script_count, char* name){
+    int index = -1;
+    for (int i = 0; i < script_count; i++){
+        //Update index when name has been seen before;
+        if (strcmp(scripts[i]->name, name)==0){
+            index = i;
+        }
+    }
+    return index;
 }
 
 void add_line_to_script(struct Script *script, const char *line){

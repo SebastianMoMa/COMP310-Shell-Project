@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
             hashtag_line = strdup(userInput);
             isBackground = 1;
-            newScript = create_script(script_count);
+            newScript = create_script(script_count, NULL);
             // printf ("Got here3. line: %s\n", hashtag_line);
 
         }

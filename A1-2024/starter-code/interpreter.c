@@ -390,7 +390,15 @@ int loadProcessestoMemory(char *process)
         return badcommandFileDoesNotExist();
     }
 
-    struct Script *new_script = create_script(script_count); // Initialize the script
+    int same_name = lookForName(script_count,process);
+    struct Script *new_script = NULL;
+    if (same_name==-1){
+
+    new_script = create_script(script_count, process); // Initialize the script
+    }
+    else {
+        new_script = scripts[same_name];
+    }
     if (new_script == NULL)
     {
         fclose(p);
@@ -417,6 +425,8 @@ int loadProcessestoMemory(char *process)
         add_line_to_script(new_script, line);
         // printf("Added line to script: %s\n", line);
     }
+    struct PCB *script_pcb = NULL;
+    if (same_name==-1){
     struct PCB *script_pcb = create_pcb(script_count, new_script->current);
     if (script_pcb == NULL)
     {
@@ -424,6 +434,9 @@ int loadProcessestoMemory(char *process)
         // f//printf(stderr, "Failed to create PCB for script\n");
         return errCode;
     }
+    }
+    
+    
     // printf("script_count: %d\n", script_count);
 
     // printf("Created PCB with id: %d\n", script_pcb->pid);
@@ -447,7 +460,7 @@ void load_queue_FCFS(int num_processes)
     {
         script_pcb = PCBs[i];
         script_pcb->job_length_score = scripts[script_pcb->pid]->job_length_score;
-        // printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
+        //printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
         // printf("this is PCB %s\n", scripts[script_pcb->pid]->head->line);
         add_to_ready_queue(script_pcb);
         // printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
@@ -464,21 +477,22 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
     int errcode = 0;
     // printf("This is numProcesses: %d\n", numProcesses);
     // printf("This is the policy: '%s'. script_num: %d\n", policy, numProcesses);
-    if (numProcesses == 2)
-    {
-        if (strcmp(processes[0], processes[1]) == 0)
-        {
-            return badcommand();
-        }
-    }
-    if (numProcesses == 3)
-    {
-        // if either of the processes are the same, we should give an error
-        if (strcmp(processes[0], processes[1]) == 0 || strcmp(processes[0], processes[2]) == 0 || strcmp(processes[2], processes[1]) == 0)
-        {
-            return badcommand();
-        }
-    }
+
+    // if (numProcesses == 2)
+    // {
+    //     if (strcmp(processes[0], processes[1]) == 0)
+    //     {
+    //         return badcommand();
+    //     }
+    // }
+    // if (numProcesses == 3)
+    // {
+    //     // if either of the processes are the same, we should give an error
+    //     if (strcmp(processes[0], processes[1]) == 0 || strcmp(processes[0], processes[2]) == 0 || strcmp(processes[2], processes[1]) == 0)
+    //     {
+    //         return badcommand();
+    //     }
+    // }
 
     if (!(strcmp(policy, "FCFS") == 0 || strcmp(policy, "SJF") == 0 || strcmp(policy, "RR") == 0 || strcmp(policy, "AGING") == 0 || strcmp(policy, "RR30") == 0))
     {
@@ -525,8 +539,10 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
         }
         else if (strcmp(policy, "RR") == 0)
         {
-            // printf("Going into RR\n");
-            load_queue_FCFS(numProcesses);
+             printf("Going into RR\n");
+            load_queue_FCFS(script_count);
+            printf("Going into RR\n");
+
             RR(2);
         }
         else if (strcmp(policy, "AGING") == 0)
@@ -932,7 +948,7 @@ int run(char *script)
         // fprintf(stderr, "Failed to open script file: %s\n", script);
         return badcommandFileDoesNotExist();
     }
-    struct Script *new_script = create_script(script_count); // Initialize the script
+    struct Script *new_script = create_script(script_count, script); // Initialize the script
     if (new_script == NULL)
     {
         fclose(p);

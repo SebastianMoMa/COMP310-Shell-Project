@@ -23,6 +23,7 @@ struct Script {
     int current_instruction_num;     
     int line_count;
     int job_length_score;
+    char * name;
 };
 
 extern struct Script *scripts[];
@@ -43,7 +44,7 @@ struct PCB {
 extern struct PCB *PCBs[];
 
 // Function prototypes for creating and managing scripts
-struct Script* create_script(int id);
+struct Script* create_script(int id, char* process);
 void free_script(struct Script *script);
 void add_line_to_script(struct Script *script, const char *line);
 void free_pcb(struct PCB *pcb);
@@ -59,6 +60,8 @@ void InfoAboutPCBsandScripts(int size);
 void Once_Script_done_AGING();
 void Once_Done_AGING();
 struct PCB *create_pcb(int pid, struct LineNode *head);
+int lookForName (int script_count, char* name);
+
 
 
 
