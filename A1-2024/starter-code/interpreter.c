@@ -407,6 +407,10 @@ int loadProcessestoMemory(char *process)
     }
     // printf("Created new script with count: %d\n", script_count);
 
+    //Use ftell() to get the current position within the file. Each time you load a page, 
+    //record the position (in bytes) where you stop reading. 
+    //Later, you can use fseek() to move back to this exact spot in the file.
+
     while (1) //(fgets(line, sizeof(line), p) !=NULL)
     {
         if (fgets(line, sizeof(line), p) == NULL)
