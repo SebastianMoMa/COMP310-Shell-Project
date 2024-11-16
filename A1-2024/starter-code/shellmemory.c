@@ -13,6 +13,8 @@ struct memory_struct
 
 
 struct memory_struct shellmemory[MEM_SIZE];
+struct Frame frameStore[FRAME_STORE_SIZE]; //the amount of frames will be multiple of 3
+
 
 struct Script *scripts[10];
 int script_count = 0;
@@ -20,6 +22,21 @@ int script_count = 0;
 struct PCB *PCBs[10];
 struct ReadyQueue ready = {NULL, NULL, 0}; // Ready queue initialization
 
+
+
+void initialize_frame_store() {
+    for (int i = 0; i < FRAME_STORE_SIZE; i++) {
+        // Initialize lines to empty strings
+        for (int j = 0; j < 3; j++) {
+            frameStore[i].lines[j][0] = '\0';  // Set each line to an empty string
+        }
+
+        // Initialize pageNumber, processId, and lastUsed to default values
+        frameStore[i].pageNumber = -1;   // -1 means no page assigned
+        frameStore[i].processId = -1;    // -1 means no process assigned
+        frameStore[i].lastUsed = -1;     // -1 means not used yet
+    }
+}
 
 
 struct Script *create_script(int id, char *name){

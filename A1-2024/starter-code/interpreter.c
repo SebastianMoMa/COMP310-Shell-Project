@@ -377,6 +377,95 @@ int print(char *var)
     return 0;
 }
 
+int loadPageToFrameStore(char *process, int processId, int pageNumber) {
+    int errCode = 0;
+    char line[100];
+    FILE *backingStore = fopen(process, "rt");
+
+    if (backingStore == NULL) {
+        return badcommandFileDoesNotExist();  // Handle file not found error
+    }
+
+    int same_name = lookForName(script_count, process);
+    struct Script *script = NULL;
+
+    if (same_name == -1) {
+        script = create_script(script_count, process);  // Initialize the script if new
+    } else {
+        script = scripts[same_name];
+    }
+
+    if (script == NULL) {
+        fclose(backingStore);
+        return errCode;  // Error if the script could not be created
+    }
+
+    int freeFrame = -1;
+    for (int i = 0; i < FRAME_STORE_SIZE; i++) {
+        if (frameStore[i].processId == -1) {  // Find an unused frame
+            freeFrame = i;
+            break;
+        }
+    }
+
+    if (freeFrame == -1) {
+        freeFrame = selectFrameToReplace();  // Select a frame to replace if no free frames are available
+    }
+
+    fseek(backingStore, pageNumber * 3 * sizeof(line), SEEK_SET);  // Position to the start of the page
+    for (int i = 0; i < 3; i++) {
+        if (fgets(line, sizeof(line), backingStore) == NULL) {
+            strcpy(frameStore[freeFrame].lines[i], "");  // Empty line if end-of-file
+        } else {
+            strcpy(frameStore[freeFrame].lines[i], line);
+        }
+    }
+
+    frameStore[freeFrame].pageNumber = pageNumber;
+    frameStore[freeFrame].processId = script_count;
+    frameStore[freeFrame].lastUsed = time(NULL);
+
+    // Update page table and script’s frame table
+    pageTable[script_count][pageNumber] = freeFrame;
+
+    if (same_name == -1) {
+        struct PCB *script_pcb = create_pcb(script_count, script->current);  // Create a PCB for new script
+        if (script_pcb == NULL) {
+            fclose(backingStore);
+            return errCode;
+        }
+    }
+
+    fclose(backingStore);
+    return 0;  // Success
+}
+
+// script_num should be field in Frame
+int sendLinesToScript(int script_num) {
+    struct Script *script = scripts[script_num];
+
+    int pageNum = script->current_instruction_num / 3;  // Page number based on current instruction
+    int lineOffset = script->current_instruction_num % 3;  // Line within the page
+
+    int frameIdx = pageTable[script_num][pageNum];
+    if (frameIdx == -1) {
+        printf("Error: Page not loaded in frame store.\n");
+        return -1;
+    }
+
+    // Copy 2 lines from frame to script for execution (adjust if fewer than 2 lines remain)
+    int linesToSend = (lineOffset + 2 < 3) ? 2 : 3 - lineOffset;
+    for (int i = 0; i < linesToSend; i++) {
+        add_line_to_script(script, frameStore[frameIdx].lines[lineOffset + i]);
+    }
+    
+    // Update script's current instruction number
+    script->current_instruction_num += linesToSend;
+
+    return 0;
+}
+
+
 int loadProcessestoMemory(char *process)
 {
     // printf("loading script: %s\n", process);
