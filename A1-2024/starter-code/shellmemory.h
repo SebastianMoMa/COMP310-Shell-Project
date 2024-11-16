@@ -7,7 +7,7 @@ int mem_check_value(char *var_in);
 void mem_set_value(char *var, char *value);
 
 
-extern int pageTable[4][FRAME_STORE_SIZE/3 +FRAME_STORE_SIZE%3]; //this 
+extern int pageTable[4][FRAME_STORE_SIZE/3]; //this 
 
 extern int script_count;
 extern struct ReadyQueue ready;
@@ -29,6 +29,7 @@ struct Script {
     char * name;
     int *frameTable;     // Array of frame indices associated with this script
     int totalPages;      // Total pages (frames) loaded for this script
+    int offset;         //Should say the position in the file
 };
 
 extern struct Script *scripts[];
@@ -53,6 +54,7 @@ struct Frame {
     int pageNumber;     // Page number for this frame
     int processId;      // ID of the process owning the page
     int lastUsed;       // Timestamp for LRU algorithm
+            
 };
 extern struct Frame frameStore[]; // MAX_FRAMES is determined by framesize
 
@@ -75,6 +77,7 @@ void Once_Script_done_AGING();
 void Once_Done_AGING();
 struct PCB *create_pcb(int pid, struct LineNode *head);
 int lookForName (int script_count, char* name);
+int findFreeFrame();
 
 
 

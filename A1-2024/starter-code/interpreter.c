@@ -73,6 +73,9 @@ void SJF();
 void swap_scripts(struct Script **a, struct Script **b);
 void RR(int numCommands);
 void Aging();
+void printFramesForScript(int processId);
+
+
 
 // Interpret commands and their arguments
 int interpreter(char *command_args[], int args_size)
@@ -377,94 +380,145 @@ int print(char *var)
     return 0;
 }
 
-int loadPageToFrameStore(char *process, int processId, int pageNumber) {
+int loadPageToFrameStore(char *process)
+{
     int errCode = 0;
     char line[100];
     FILE *backingStore = fopen(process, "rt");
-
-    if (backingStore == NULL) {
-        return badcommandFileDoesNotExist();  // Handle file not found error
+    printf("process: %s\n", process);
+    if (backingStore == NULL)
+    {
+        return badcommandFileDoesNotExist(); // Handle file not found error
     }
 
     int same_name = lookForName(script_count, process);
     struct Script *script = NULL;
 
-    if (same_name == -1) {
-        script = create_script(script_count, process);  // Initialize the script if new
-    } else {
+    if (same_name == -1)
+    {
+        script = create_script(script_count, process); // Initialize the script if new
+    }
+    else
+    {
         script = scripts[same_name];
     }
 
-    if (script == NULL) {
+    if (script == NULL)
+    {
         fclose(backingStore);
-        return errCode;  // Error if the script could not be created
+        return errCode; // Error if the script could not be created
     }
 
-    int freeFrame = -1;
-    for (int i = 0; i < FRAME_STORE_SIZE; i++) {
-        if (frameStore[i].processId == -1) {  // Find an unused frame
-            freeFrame = i;
-            break;
+    int freeFrame = findFreeFrame();
+
+
+    if (freeFrame == -1)
+    {
+        //We will implement this later with LRU
+        //freeFrame = selectFrameToReplace(); // Select a frame to replace if no free frames are available
+    }
+
+    int pageNumber1 = script->totalPages;
+    int positionFile = script->offset;
+    //int positionFile = pageNumber * 3 ;
+    printf("Position in file: %d\n", positionFile);
+    fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
+    for (int i = 0; i < 3; i++)
+    {
+        if (fgets(line, sizeof(line), backingStore) == NULL)
+        {
+            //printf("NUll line: %s\n", line);
+            strcpy(frameStore[freeFrame].lines[i], "0"); // Empty line if end-of-file
         }
-    }
-
-    if (freeFrame == -1) {
-        freeFrame = selectFrameToReplace();  // Select a frame to replace if no free frames are available
-    }
-
-    fseek(backingStore, pageNumber * 3 * sizeof(line), SEEK_SET);  // Position to the start of the page
-    for (int i = 0; i < 3; i++) {
-        if (fgets(line, sizeof(line), backingStore) == NULL) {
-            strcpy(frameStore[freeFrame].lines[i], "");  // Empty line if end-of-file
-        } else {
+        else
+        {
+            printf("line: %s\n", line);
             strcpy(frameStore[freeFrame].lines[i], line);
+            script->offset += strlen(line);
+            //printf("Updated offset: %d\n", script->offset);
         }
     }
 
-    frameStore[freeFrame].pageNumber = pageNumber;
+    frameStore[freeFrame].pageNumber = pageNumber1;
+    
     frameStore[freeFrame].processId = script_count;
-    frameStore[freeFrame].lastUsed = time(NULL);
+    //This needs to be implemented later to keep track of least used
+    frameStore[freeFrame].lastUsed = 0;
 
     // Update page table and script’s frame table
-    pageTable[script_count][pageNumber] = freeFrame;
-
-    if (same_name == -1) {
-        struct PCB *script_pcb = create_pcb(script_count, script->current);  // Create a PCB for new script
-        if (script_pcb == NULL) {
+    pageTable[script_count][script->totalPages] = freeFrame;
+    script->totalPages ++;
+    if (same_name == -1)
+    {
+        struct PCB *script_pcb = create_pcb(script_count, script->current); // Create a PCB for new script
+        if (script_pcb == NULL)
+        {
             fclose(backingStore);
             return errCode;
         }
     }
+   // printFramesForScript(script_count);
+
 
     fclose(backingStore);
-    return 0;  // Success
+    return 0; // Success
+}
+
+void printFramesForScript(int processId)
+{
+    printf("\nFrames for Process ID: %d\n", processId);
+    printf("| Frame # | Page # | Last Used  | Lines in Frame       |\n");
+
+    int found = 0;
+
+    for (int i = 0; i < FRAME_STORE_SIZE; i++)
+    {
+        if (frameStore[i].processId == processId)
+        {
+            found = 1;
+            printf("| %-7d | %-6d | %-9d | %-20s |\n",
+                   i,
+                   frameStore[i].pageNumber,
+                   frameStore[i].lastUsed,
+                   frameStore[i].lines[0]); // First line in the frame
+            printf("|         |        |           | %-20s |\n", frameStore[i].lines[1]); // Second line
+            printf("|         |        |           | %-20s |\n", frameStore[i].lines[2]); // Third line
+        }
+    }
+
+    if (!found)
+    {
+        printf("No frames found for Process ID %d.\n", processId);
+    }
 }
 
 // script_num should be field in Frame
-int sendLinesToScript(int script_num) {
+int sendLinesToScript(int script_num)
+{
     struct Script *script = scripts[script_num];
 
-    int pageNum = script->current_instruction_num / 3;  // Page number based on current instruction
-    int lineOffset = script->current_instruction_num % 3;  // Line within the page
+    int pageNum = script->current_instruction_num / 3;    // Page number based on current instruction
+    int lineOffset = script->current_instruction_num % 3; // Line within the page
 
     int frameIdx = pageTable[script_num][pageNum];
-    if (frameIdx == -1) {
+    if (frameIdx == -1)
+    {
         printf("Error: Page not loaded in frame store.\n");
         return -1;
     }
 
     // Copy 2 lines from frame to script for execution (adjust if fewer than 2 lines remain)
     int linesToSend = (lineOffset + 2 < 3) ? 2 : 3 - lineOffset;
-    for (int i = 0; i < linesToSend; i++) {
+    for (int i = 0; i < linesToSend; i++)
+    {
         add_line_to_script(script, frameStore[frameIdx].lines[lineOffset + i]);
     }
-    
+
     // Update script's current instruction number
     script->current_instruction_num += linesToSend;
 
     return 0;
 }
-
 
 int loadProcessestoMemory(char *process)
 {
@@ -479,13 +533,15 @@ int loadProcessestoMemory(char *process)
         return badcommandFileDoesNotExist();
     }
 
-    int same_name = lookForName(script_count,process);
+    int same_name = lookForName(script_count, process);
     struct Script *new_script = NULL;
-    if (same_name==-1){
+    if (same_name == -1)
+    {
 
-    new_script = create_script(script_count, process); // Initialize the script
+        new_script = create_script(script_count, process); // Initialize the script
     }
-    else {
+    else
+    {
         new_script = scripts[same_name];
     }
     if (new_script == NULL)
@@ -496,9 +552,9 @@ int loadProcessestoMemory(char *process)
     }
     // printf("Created new script with count: %d\n", script_count);
 
-    //Use ftell() to get the current position within the file. Each time you load a page, 
-    //record the position (in bytes) where you stop reading. 
-    //Later, you can use fseek() to move back to this exact spot in the file.
+    // Use ftell() to get the current position within the file. Each time you load a page,
+    // record the position (in bytes) where you stop reading.
+    // Later, you can use fseek() to move back to this exact spot in the file.
 
     while (1) //(fgets(line, sizeof(line), p) !=NULL)
     {
@@ -519,17 +575,17 @@ int loadProcessestoMemory(char *process)
         // printf("Added line to script: %s\n", line);
     }
     struct PCB *script_pcb = NULL;
-    if (same_name==-1){
-    struct PCB *script_pcb = create_pcb(script_count, new_script->current);
-    if (script_pcb == NULL)
+    if (same_name == -1)
     {
-        fclose(p);
-        // f//printf(stderr, "Failed to create PCB for script\n");
-        return errCode;
+        struct PCB *script_pcb = create_pcb(script_count, new_script->current);
+        if (script_pcb == NULL)
+        {
+            fclose(p);
+            // f//printf(stderr, "Failed to create PCB for script\n");
+            return errCode;
+        }
     }
-    }
-    
-    
+
     // printf("script_count: %d\n", script_count);
 
     // printf("Created PCB with id: %d\n", script_pcb->pid);
@@ -547,16 +603,16 @@ int loadProcessestoMemory(char *process)
 void load_queue_FCFS(int num_processes)
 {
     struct PCB *script_pcb = NULL;
-    // printf("this is script_count: %d\n", script_count);
+     printf("this is script_count: %d\n", script_count);
 
     for (int i = 0; i < script_count; i++)
     {
         script_pcb = PCBs[i];
         script_pcb->job_length_score = scripts[script_pcb->pid]->job_length_score;
-        //printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
-        // printf("this is PCB %s\n", scripts[script_pcb->pid]->head->line);
+        // printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
+        //  printf("this is PCB %s\n", scripts[script_pcb->pid]->head->line);
         add_to_ready_queue(script_pcb);
-        // printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
+         printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
     }
     // printf("leaving load_queue_FCFS\n");
 }
@@ -596,7 +652,13 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
     if (numProcesses == 1 && isBackground != 1 && Background_happening != 1)
     {
         // printf("Loading single process: %s\n", processes[0]);
-        loadProcessestoMemory(processes[0]);
+
+        // I guess the idea here is to give it the # of pages that the process is going to use
+        //int frameNumber = findFreeFrame();
+
+        loadPageToFrameStore(processes[0]);
+        loadPageToFrameStore(processes[0]);
+        // loadProcessestoMemory(processes[0]);
         load_queue_FCFS(numProcesses);
         // printf("Here\n");
 
@@ -607,7 +669,10 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
     else if (numProcesses == 1 && isBackground != 1 && Background_happening == 1)
     {
         // printf("2Loading single process: %s\n", processes[0]);
-        loadProcessestoMemory(processes[0]);
+        //int frameNumber = findFreeFrame();
+        loadPageToFrameStore(processes[0]);
+        loadPageToFrameStore(processes[0]);
+        // loadProcessestoMemory(processes[0]);
         load_queue_FCFS(numProcesses);
     }
 
@@ -617,7 +682,12 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
         for (int i = 0; i < numProcesses; i++)
         {
             // printf("Got here\n");
-            loadProcessestoMemory(processes[i]);
+            //int frameNumber = findFreeFrame();
+            loadPageToFrameStore(processes[i]);
+            loadPageToFrameStore(processes[i]);
+
+
+            // loadProcessestoMemory(processes[i]);
         }
         // printf("Script_count: %d\n", script_count);
         if (strcmp(policy, "FCFS") == 0)
@@ -632,11 +702,11 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
         }
         else if (strcmp(policy, "RR") == 0)
         {
-             printf("Going into RR\n");
             load_queue_FCFS(script_count);
+            
             printf("Going into RR\n");
-
             RR(2);
+            printf("Leaving into RR\n");
         }
         else if (strcmp(policy, "AGING") == 0)
         {
@@ -694,11 +764,12 @@ void RR(int numCommands)
     while (ready.head != NULL)
     {
         struct PCB *current_process = ready.head;
-        // printf("Inside RR while_loop. while_num = %d\n", while_num);
+         printf("Inside RR while_loop. while_num = %d\n", while_num);
         while_num++;
-        
+
         // If current process is invalid, break
-        if (current_process == NULL) break;
+        if (current_process == NULL)
+            break;
 
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
         // printf("Current script line: %s\n", current_script->current->line);
@@ -718,7 +789,7 @@ void RR(int numCommands)
 
             int errCode = parseInput(current_line); // Process the current line
             // printf("Parsed line with error code: %d\n", errCode);
-            
+
             current_line_node = current_line_node->next; // Advance to next line
 
             // instruction_num++; // Update instruction count
@@ -768,7 +839,8 @@ void Scheduler1() // Works for FCFS and SJF
         // printf("Inside Scheduler1 while_loop. while_num = %d\n", while_num);
         while_num++;
         // Check if current_process is valid, otherwise break
-        if (current_process == NULL) break;
+        if (current_process == NULL)
+            break;
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
         // printf("Current script head line: %s\n", current_script->head->line);
         struct LineNode *current_line_node = current_script->current;
@@ -921,7 +993,8 @@ void Aging()
         // printf("Inside Aging while_loop. while_num = %d\n", while_num);
         while_num++;
         // Check if current_process is valid, otherwise break
-        if (current_process == NULL) break;
+        if (current_process == NULL)
+            break;
 
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
         // printf("Current script line: %s\n", current_script->current->line);
@@ -978,7 +1051,8 @@ void Aging()
             // script_count--;
             // current_process = new_process; // Move to the next process
             current_process = ready.head;
-            if (ready.head == NULL) break;
+            if (ready.head == NULL)
+                break;
             // printf("Got here\n");
             // AgeJobs();
 
@@ -1098,7 +1172,7 @@ int run(char *script)
         int errCode = parseInput(current_line); // Process the current line
         // printf("Parsed line with error code: %d\n", errCode);
         current_line_node = current_line_node->next; // Advance to next line
-        instruction_num++; // Update instruction count
+        instruction_num++;                           // Update instruction count
     }
     return errCode;
 }

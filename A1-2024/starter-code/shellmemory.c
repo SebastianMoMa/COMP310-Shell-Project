@@ -14,6 +14,7 @@ struct memory_struct
 
 struct memory_struct shellmemory[MEM_SIZE];
 struct Frame frameStore[FRAME_STORE_SIZE]; //the amount of frames will be multiple of 3
+int pageTable[4][FRAME_STORE_SIZE/3];
 
 
 struct Script *scripts[10];
@@ -38,6 +39,17 @@ void initialize_frame_store() {
     }
 }
 
+int findFreeFrame(){
+    int frame = -1;
+    for (int i = 0; i < FRAME_STORE_SIZE/3; i++){
+        // A frame is considered free if it is not assigned to any process
+        if (frameStore[i].processId == -1){
+            frame = i;
+        }
+    }
+    return frame;
+}
+
 
 struct Script *create_script(int id, char *name){
     struct Script *new_script = malloc(sizeof(struct Script));
@@ -53,8 +65,10 @@ struct Script *create_script(int id, char *name){
         scripts[id % 10] = new_script;
         new_script->job_length_score=0;
         new_script->name = name;
-        
+        new_script->offset = 0;
+        new_script->totalPages = 0;
     }
+
     else {
         return NULL;
     }

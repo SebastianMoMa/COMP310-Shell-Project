@@ -1,5 +1,9 @@
 set x f1 5 lines
+set y 4
 echo $x
 echo $x
+set y 4
+set z 10
 echo $x
 echo $x
+echo $z
