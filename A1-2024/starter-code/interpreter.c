@@ -499,7 +499,7 @@ int sendLinesToScript(int script_num)
 
     int pageNum = script->current_instruction_num / 3;    // Page number based on current instruction
     int lineOffset = script->current_instruction_num % 3; // Line within the page
-
+    
     int frameIdx = pageTable[script_num][pageNum];
     if (frameIdx == -1)
     {
