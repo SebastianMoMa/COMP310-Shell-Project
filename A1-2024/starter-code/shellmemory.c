@@ -42,11 +42,15 @@ void initialize_frame_store() {
 int findFreeFrame(){
     int frame = -1;
     for (int i = 0; i < FRAME_STORE_SIZE/3; i++){
+        printf("find free frame Loop: %d\n", i);
         // A frame is considered free if it is not assigned to any process
         if (frameStore[i].processId == -1){
             frame = i;
+            printf("free frame number: %d\n", frame);
+            return frame;
         }
     }
+    printf("can't find one. free frame number: %d\n", frame);
     return frame;
 }
 

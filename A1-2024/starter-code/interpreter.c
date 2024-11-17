@@ -391,14 +391,17 @@ int loadPageToFrameStore(char *process)
 
     int same_name = lookForName(script_count, process);
     struct Script *script = NULL;
-
+    int id =0;
     if (same_name == -1)
     {
+        printf("New Script\n");
         script = create_script(script_count, process); // Initialize the script if new
+        id = script_count;
     }
     else
     {
         script = scripts[same_name];
+        id = same_name;
     }
 
     if (script == NULL)
@@ -408,6 +411,7 @@ int loadPageToFrameStore(char *process)
     }
 
     int freeFrame = findFreeFrame();
+    printf("Free frame: %d\n", freeFrame);
 
     if (freeFrame == -1)
     {
@@ -415,10 +419,9 @@ int loadPageToFrameStore(char *process)
         // freeFrame = selectFrameToReplace(); // Select a frame to replace if no free frames are available
     }
 
-    int pageNumber1 = script->totalPages;
     int positionFile = script->offset;
     // int positionFile = pageNumber * 3 ;
-    printf("Position in file: %d\n", positionFile);
+    //printf("Position in file: %d\n", positionFile);
     fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
     for (int i = 0; i < 3; i++)
     {
@@ -437,18 +440,20 @@ int loadPageToFrameStore(char *process)
         }
     }
 
-    frameStore[freeFrame].pageNumber = pageNumber1;
+    frameStore[freeFrame].pageNumber = script->totalPages;
 
-    frameStore[freeFrame].processId = script_count;
+    frameStore[freeFrame].processId = id;
     // This needs to be implemented later to keep track of least used
     frameStore[freeFrame].lastUsed = 0;
 
     // Update page table and script’s frame table
-    pageTable[script_count][script->totalPages] = freeFrame;
+    printf("Script count1: %d\n", script_count);
+    pageTable[id][script->totalPages] = freeFrame;
+    printf("Script: %d, newframenumber: %d frame: %d\n",id,script->totalPages, pageTable[id][script->totalPages]);
     script->totalPages++;
     if (same_name == -1)
     {
-        struct PCB *script_pcb = create_pcb(script_count, script->current); // Create a PCB for new script
+        struct PCB *script_pcb = create_pcb(id, script->current); // Create a PCB for new script
         if (script_pcb == NULL)
         {
             fclose(backingStore);
@@ -456,19 +461,27 @@ int loadPageToFrameStore(char *process)
         }
     }
 
-    //How to go from frame to script
+    printf("Script count2: %d\nscript page number: %d\n", script_count, script->totalPages);
+
     for (int j = 0; j < script_count; j++)
     {
-        for (int i = 0; i < script->totalPages; i++)
+        struct Script *scripity = scripts[j];
+        
+        for (int i = 0; i < scripity->totalPages; i++)
         {
-
+            int frameNumber = pageTable[j][i];
+            printf("frame number: %d\n", frameNumber);
+            for (int k = 0; k < 3; k++){
+                printf("Script: %d, frame: %d, Line%d: %s\n",j,i,k, frameStore[frameNumber].lines[k]);
+            }
         }
 
-        printFramesForScript(0);
+        //printFramesForScript(0);
 
-        fclose(backingStore);
-        return 0; // Success
+        
     }
+    fclose(backingStore);
+    return 0; // Success
 }
 
 void printFramesForScript(int processId)
@@ -656,6 +669,8 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
         // printf("Error: Invalid Policy\n");
         return 4;
     }
+
+    initialize_frame_store();
 
     if (numProcesses == 1 && isBackground != 1 && Background_happening != 1)
     {

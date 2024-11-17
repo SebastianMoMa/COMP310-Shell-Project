@@ -78,6 +78,7 @@ void Once_Done_AGING();
 struct PCB *create_pcb(int pid, struct LineNode *head);
 int lookForName (int script_count, char* name);
 int findFreeFrame();
+void initialize_frame_store();
 
 
 
