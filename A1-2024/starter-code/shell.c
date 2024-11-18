@@ -43,18 +43,21 @@ int main(int argc, char *argv[])
 
     // init shell memory
     mem_init();
-
+    int count = 0;
     while (1)
     {
         if (!isBatch)
         { 
             printf("%c ", prompt);
         }
+                    
 
         if (fgets(userInput, MAX_USER_INPUT - 1, input) == NULL)
         {
+                    count ++;
             if (feof(stdin))
             {
+
                 clearerr(stdin);
                 fclose(input);
                 input = stdin;
@@ -62,9 +65,13 @@ int main(int argc, char *argv[])
                 // printf("Entering interactive mode\n");
                 continue;
             }
+
             break;
+            
         }
+
         // printf ("Got here1. line: %s\n", userInput);
+        
         if (strrchr(userInput, '#') != NULL)
         {
             // printf ("Got here2. line: %s\n", userInput);
@@ -73,16 +80,21 @@ int main(int argc, char *argv[])
             isBackground = 1;
             newScript = create_script(script_count, NULL);
             // printf ("Got here3. line: %s\n", hashtag_line);
+                    //printf("here\n");
 
         }
+        
         else if (isBackground == 1)
         {
+                      //  printf("here\n");
+
             // printf("Got into adding to script\n");
             add_line_to_script(newScript, userInput);
             // printf("leaving adding to script\n");
             
         }
         else {
+
         errorCode = parseInput(userInput);
         }
         if (errorCode == -1)
@@ -91,14 +103,7 @@ int main(int argc, char *argv[])
 
         // printf("Hashtag_line: %s\n", hashtag_line);
     }
-    struct PCB *script_pcb = create_pcb(script_count, newScript->current);
-    
-    if (isBackground == 1){
-        //loadProcessestoMemory(newScript);
-        // printf("Got here. Hashtag_line: %s. Script_count: %d\n", hashtag_line, script_count);
-        errorCode = parseInput(hashtag_line);
-    }
-
+   
     return 0;
 }
 

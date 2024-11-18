@@ -551,6 +551,8 @@ void printallFramesForScript()
     }
 }
 
+///home/2023/smoser4/FALL2024/COMP310/A1/comp310-ecse427-coursework-f24/A1-2024/starter-code
+
 // script_num should be field in Frame
 int sendLinesToScript(int script_num, int pageNum)
 {
@@ -793,6 +795,7 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
             return errcode;
         }
     }
+    printf("Leaving totally\n");
 }
 
 void shift_queue()
