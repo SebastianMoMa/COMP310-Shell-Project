@@ -78,6 +78,7 @@ void printFramesForScript(int processId);
 // Interpret commands and their arguments
 int interpreter(char *command_args[], int args_size)
 {
+    // printf("here interpreter\n");
     int i;
     // printf("args_size 1: %d\n", args_size);
 
@@ -112,6 +113,7 @@ int interpreter(char *command_args[], int args_size)
     // set
     else if (strcmp(command_args[0], "set") == 0)
     {
+        //printf("here set\n");
         if (args_size < 3)
         {
             return badcommand();
@@ -124,6 +126,7 @@ int interpreter(char *command_args[], int args_size)
                 strcat(value, " "); // Add space if not the first token
             strcat(value, command_args[i]);
         }
+        // printf("going into set, var: %s, value: %s\n", command_args[1], value);
         return set(command_args[1], value);
     }
     // print
@@ -228,8 +231,9 @@ int quit()
 
 int set(char *var, char *value)
 {
-    // printf("var: %s, value: %s\n", var, value);
+    //printf("var: %s, value: %s\n", var, value);
     mem_set_value(var, value);
+    //printf("Did set!\n");
     return 0;
 }
 
@@ -391,7 +395,7 @@ int loadPageToFrameStore(char *process)
 
     int same_name = lookForName(script_count, process);
     struct Script *script = NULL;
-    int id =0;
+    int id = 0;
     if (same_name == -1)
     {
         printf("New Script\n");
@@ -415,26 +419,31 @@ int loadPageToFrameStore(char *process)
 
     if (freeFrame == -1)
     {
-        // We will implement this later with LRU
-        // freeFrame = selectFrameToReplace(); // Select a frame to replace if no free frames are available
+        // return 0;
+        //  We will implement this later with LRU
+        //  freeFrame = selectFrameToReplace(); // Select a frame to replace if no free frames are available
     }
 
+    // Use ftell() to get the current position within the file. Each time you load a page,
+    // record the position (in bytes) where you stop reading.
+    // Later, you can use fseek() to move back to this exact spot in the file.
     int positionFile = script->offset;
     // int positionFile = pageNumber * 3 ;
-    //printf("Position in file: %d\n", positionFile);
+    // printf("Position in file: %d\n", positionFile);
     fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
     for (int i = 0; i < 3; i++)
     {
         if (fgets(line, sizeof(line), backingStore) == NULL)
         {
             // printf("NUll line: %s\n", line);
-            strcpy(frameStore[freeFrame].lines[i], "0"); // Empty line if end-of-file
+            strcpy(frameStore[freeFrame].lines[i], "-1"); // Empty line if end-of-file
             break;
         }
         else
         {
             printf("line: %s\n", line);
             strcpy(frameStore[freeFrame].lines[i], line);
+            frameStore[freeFrame].linesUsed++;
             script->offset += strlen(line);
             // printf("Updated offset: %d\n", script->offset);
         }
@@ -449,7 +458,7 @@ int loadPageToFrameStore(char *process)
     // Update page table and script’s frame table
     printf("Script count1: %d\n", script_count);
     pageTable[id][script->totalPages] = freeFrame;
-    printf("Script: %d, newframenumber: %d frame: %d\n",id,script->totalPages, pageTable[id][script->totalPages]);
+    printf("Script: %d, newframenumber: %d frame: %d\n", id, script->totalPages, pageTable[id][script->totalPages]);
     script->totalPages++;
     if (same_name == -1)
     {
@@ -461,31 +470,31 @@ int loadPageToFrameStore(char *process)
         }
     }
 
-    printf("Script count2: %d\nscript page number: %d\n", script_count, script->totalPages);
+    // printf("Script count2: %d\nscript page number: %d\n", script_count, script->totalPages);
 
-    for (int j = 0; j < script_count; j++)
-    {
-        struct Script *scripity = scripts[j];
-        
-        for (int i = 0; i < scripity->totalPages; i++)
-        {
-            int frameNumber = pageTable[j][i];
-            printf("frame number: %d\n", frameNumber);
-            for (int k = 0; k < 3; k++){
-                printf("Script: %d, frame: %d, Line%d: %s\n",j,i,k, frameStore[frameNumber].lines[k]);
-            }
-        }
+    // for (int j = 0; j < script_count; j++)
+    // {
+    //     struct Script *scripity = scripts[j];
 
-        //printFramesForScript(0);
+    //     for (int i = 0; i < scripity->totalPages; i++)
+    //     {
+    //         int frameNumber = pageTable[j][i];
+    //         printf("frame number: %d\n", frameNumber);
+    //         for (int k = 0; k < 3; k++){
+    //             printf("Script: %d, frame: %d, Line%d: %s\n",j,i,k, frameStore[frameNumber].lines[k]);
+    //         }
+    //     }
 
-        
-    }
+    //     //printFramesForScript(0);
+
+    // }
     fclose(backingStore);
     return 0; // Success
 }
 
 void printFramesForScript(int processId)
 {
+
     printf("\nFrames for Process ID: %d\n", processId);
     printf("| Frame # | Page # | Last Used  | Lines in Frame       |\n");
 
@@ -512,15 +521,47 @@ void printFramesForScript(int processId)
     }
 }
 
+void printallFramesForScript()
+{
+
+    int found = 0;
+    for (int j = 0; j < script_count; j++)
+    {
+        printf("\nFrames for Process ID: %d\n", j);
+        printf("| Frame # | Page # | Last Used  | Lines in Frame       |\n");
+
+        for (int i = 0; i < FRAME_STORE_SIZE; i++)
+        {
+            if (frameStore[i].processId == j)
+            {
+                found = 1;
+                printf("| %-7d | %-6d | %-9d | %-20s |\n",
+                       i,
+                       frameStore[i].pageNumber,
+                       frameStore[i].lastUsed,
+                       frameStore[i].lines[0]);                                               // First line in the frame
+                printf("|         |        |           | %-20s |\n", frameStore[i].lines[1]); // Second line
+                printf("|         |        |           | %-20s |\n", frameStore[i].lines[2]); // Third line
+            }
+            if (!found)
+            {
+                printf("No frames found for Process ID %d.\n", j);
+            }
+        }
+    }
+}
+
 // script_num should be field in Frame
-int sendLinesToScript(int script_num, int page)
+int sendLinesToScript(int script_num, int pageNum)
 {
     struct Script *script = scripts[script_num];
 
-    int pageNum = page;                                   // Page number based on current instruction
-    int lineOffset = script->current_instruction_num % 3; // Line within the page
+    // int pageNum = page;                                   // Page number based on current instruction
+    // int lineOffset = script->current_instruction_num % 3; // Line within the page
 
     int frameIdx = pageTable[script_num][pageNum];
+    printf("script: %d page: %d Frame index: %d\n", script_num, pageNum, frameIdx);
+
     if (frameIdx == -1)
     {
         printf("Error: Page not loaded in frame store.\n");
@@ -528,11 +569,12 @@ int sendLinesToScript(int script_num, int page)
     }
 
     // Copy 2 lines from frame to script for execution (adjust if fewer than 2 lines remain)
-    int linesToSend = (lineOffset + 2 < 3) ? 2 : 3 - lineOffset;
+    // int linesToSend = (lineOffset + 2 < 3) ? 2 : 3 - lineOffset;
 
-    for (int i = 0; i < linesToSend; i++)
+    for (int i = 0; i < frameStore[frameIdx].linesUsed; i++)
     {
-        add_line_to_script(script, frameStore[frameIdx].lines[lineOffset + i]);
+        printf("Line to add: %s\n", frameStore[frameIdx].lines[i]);
+        add_line_to_script(script, frameStore[frameIdx].lines[i]);
     }
 
     // Update script's current instruction number
@@ -573,16 +615,12 @@ int loadProcessestoMemory(char *process)
     }
     // printf("Created new script with count: %d\n", script_count);
 
-    // Use ftell() to get the current position within the file. Each time you load a page,
-    // record the position (in bytes) where you stop reading.
-    // Later, you can use fseek() to move back to this exact spot in the file.
-
     while (1) //(fgets(line, sizeof(line), p) !=NULL)
     {
         if (fgets(line, sizeof(line), p) == NULL)
         {
             add_line_to_script(new_script, " ");
-            printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
+            printf("This is line where fgets(line, sizeof(line), p) == NULL: %s\n", line);
             break;
         }
         if (feof(p))
@@ -633,7 +671,7 @@ void load_queue_FCFS(int num_processes)
         // printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
         //  printf("this is PCB %s\n", scripts[script_pcb->pid]->head->line);
         add_to_ready_queue(script_pcb);
-        printf("Added PCB with id: %d to the ready queue.\n", script_pcb->pid);
+        printf("Added PCB with id: %d, and scripts number: %d to the ready queue.\n", script_pcb->pid, i);
     }
     // printf("leaving load_queue_FCFS\n");
 }
@@ -714,9 +752,12 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
             loadPageToFrameStore(processes[i]);
             sendLinesToScript(i, 0);
             sendLinesToScript(i, 1);
+            //printFramesForScript(i);
 
             // loadProcessestoMemory(processes[i]);
         }
+
+        printallFramesForScript();
 
         if (strcmp(policy, "FCFS") == 0)
         {
@@ -793,7 +834,7 @@ void RR(int numCommands)
     while (ready.head != NULL)
     {
         struct PCB *current_process = ready.head;
-        printf("Inside RR while_loop. while_num = %d\n", while_num);
+        // printf("Inside RR while_loop. while_num = %d\n", while_num);
         while_num++;
 
         // If current process is invalid, break
@@ -801,7 +842,7 @@ void RR(int numCommands)
             break;
 
         struct Script *current_script = scripts[current_process->pid]; // Get the process from array
-        // printf("Current script line: %s\n", current_script->current->line);
+        // printf("Current script line: %s", current_script->current->line);
         struct LineNode *current_line_node = current_script->current;
         int instruction_num = current_script->current_instruction_num; // Local variable for instruction tracking
         // printf("Current script line_num: %d\n", instruction_num);
@@ -814,10 +855,10 @@ void RR(int numCommands)
             while_num2++;
 
             char *current_line = current_line_node->line; // Get the current line
-            // printf("Current line_node line: %s\n", current_line_node->line);
+            // printf("Current line_node line: %s", current_line_node->line);
 
             int errCode = parseInput(current_line); // Process the current line
-            // printf("Parsed line with error code: %d\n", errCode);
+                                                    // printf("Parsed line with error code: %d\n", errCode);
 
             current_line_node = current_line_node->next; // Advance to next line
 

@@ -1,13 +1,13 @@
 //shellmemory.h
 #define MEM_SIZE 1000
-#define FRAME_STORE_SIZE 10
+#define FRAME_STORE_SIZE 90
 void mem_init();
 char *mem_get_value(int pos);
 int mem_check_value(char *var_in);
 void mem_set_value(char *var, char *value);
 
 
-extern int pageTable[4][FRAME_STORE_SIZE/3]; //this 
+extern int pageTable[4][FRAME_STORE_SIZE/3]; // can divide by 3 here, since the size will be multiple of 3 
 
 extern int script_count;
 extern struct ReadyQueue ready;
@@ -54,6 +54,7 @@ struct Frame {
     int pageNumber;     // Page number for this frame
     int processId;      // ID of the process owning the page
     int lastUsed;       // Timestamp for LRU algorithm
+    int linesUsed;
             
 };
 extern struct Frame frameStore[]; // MAX_FRAMES is determined by framesize

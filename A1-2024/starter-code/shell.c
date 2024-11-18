@@ -111,6 +111,7 @@ int wordEnding(char c)
 
 int parseInput(char inp[])
 {
+    //printf("Here\n");
     int errorCode;
 
     char *commands[10];
@@ -127,6 +128,7 @@ int parseInput(char inp[])
 
     for (int commandNUM = 0; commandNUM < commandCount; commandNUM++)
     {
+        //printf("Here\n");
         char *instruction = commands[commandNUM];
         char tmp[200], *words[100];
         int ix = 0, w = 0; // ix = index, w = word
@@ -148,7 +150,11 @@ int parseInput(char inp[])
                 break;
             ix++;
         }
+        //printf("Here\n");
+        //printf("words: %s, w:%d\n", *words, w);
         errorCode = interpreter(words, w);
+        //printf("Here\n");
     }
+    
     return errorCode;
 }

@@ -36,21 +36,22 @@ void initialize_frame_store() {
         frameStore[i].pageNumber = -1;   // -1 means no page assigned
         frameStore[i].processId = -1;    // -1 means no process assigned
         frameStore[i].lastUsed = -1;     // -1 means not used yet
+        frameStore[i].linesUsed =0;
     }
 }
 
 int findFreeFrame(){
     int frame = -1;
     for (int i = 0; i < FRAME_STORE_SIZE/3; i++){
-        printf("find free frame Loop: %d\n", i);
+        //printf("find free frame Loop: %d\n", i);
         // A frame is considered free if it is not assigned to any process
         if (frameStore[i].processId == -1){
             frame = i;
-            printf("free frame number: %d\n", frame);
+            //printf("free frame number: %d\n", frame);
             return frame;
         }
     }
-    printf("can't find one. free frame number: %d\n", frame);
+    //printf("can't find one. free frame number: %d\n", frame);
     return frame;
 }
 
@@ -359,14 +360,18 @@ void mem_init()
 void mem_set_value(char *var_in, char *value_in)
 {
     int i;
+    
 
     for (i = 0; i < MEM_SIZE; i++)
     {
+       // printf("bool for strcmp(shellmemory[i].var, var_in): %d, shellmemory[i].var: %s, var_in: %s\n", strcmp(shellmemory[i].var, var_in),shellmemory[i].var, var_in);
         if (strcmp(shellmemory[i].var, var_in) == 0)
         {
+           // printf("Here13\n");
             shellmemory[i].value = strdup(value_in);
             return;
         }
+        
     }
 
     // Value does not exist, need to find a free spot.
