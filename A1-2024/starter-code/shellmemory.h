@@ -1,6 +1,6 @@
 //shellmemory.h
 #define MEM_SIZE 1000
-#define FRAME_STORE_SIZE 90
+#define FRAME_STORE_SIZE 18
 void mem_init();
 char *mem_get_value(int pos);
 int mem_check_value(char *var_in);
@@ -30,6 +30,7 @@ struct Script {
     int *frameTable;     // Array of frame indices associated with this script
     int totalPages;      // Total pages (frames) loaded for this script
     int offset;         //Should say the position in the file
+    int readyToChange;
 };
 
 extern struct Script *scripts[];
@@ -55,6 +56,7 @@ struct Frame {
     int processId;      // ID of the process owning the page
     int lastUsed;       // Timestamp for LRU algorithm
     int linesUsed;
+    int Started;
             
 };
 extern struct Frame frameStore[]; // MAX_FRAMES is determined by framesize

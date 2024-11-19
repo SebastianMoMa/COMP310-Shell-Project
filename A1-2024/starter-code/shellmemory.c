@@ -37,6 +37,7 @@ void initialize_frame_store() {
         frameStore[i].processId = -1;    // -1 means no process assigned
         frameStore[i].lastUsed = -1;     // -1 means not used yet
         frameStore[i].linesUsed =0;
+        frameStore[i].Started = 0;
     }
 }
 
@@ -72,6 +73,7 @@ struct Script *create_script(int id, char *name){
         new_script->name = name;
         new_script->offset = 0;
         new_script->totalPages = 0;
+        new_script->readyToChange=0;
     }
 
     else {
@@ -102,7 +104,7 @@ void add_line_to_script(struct Script *script, const char *line){
         new_line_node->next = NULL;
 
         // Append to the linked list
-        if (script->head == NULL)
+        if (script->head == NULL || script->current ==NULL)
         {
             script->head = new_line_node;
             script->current=script->head;
