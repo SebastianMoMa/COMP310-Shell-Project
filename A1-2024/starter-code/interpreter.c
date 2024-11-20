@@ -389,7 +389,7 @@ int print(char *var)
 int checkEOF(struct Script *script)
 {
     char *process = script->name;
-    //int errCode = 0;
+    // int errCode = 0;
     FILE *backingStore = fopen(process, "rt");
     // printf("process: %s\n", process);
     if (backingStore == NULL)
@@ -399,18 +399,18 @@ int checkEOF(struct Script *script)
 
     int same_name = lookForName(script_count, process);
     script = NULL;
-    //int id = 0;
-    // if (same_name == -1)
-    // {
-    //     printf("New Script\n");
-    //     script = create_script(script_count, process); // Initialize the script if new
-    //     id = script_count;
-    // }
-    // else
-    // {
+    // int id = 0;
+    //  if (same_name == -1)
+    //  {
+    //      printf("New Script\n");
+    //      script = create_script(script_count, process); // Initialize the script if new
+    //      id = script_count;
+    //  }
+    //  else
+    //  {
     script = scripts[same_name];
-    //id = same_name;
-    //}
+    // id = same_name;
+    // }
 
     int positionFile = script->offset;
     // printf("Position in file: %d\n", positionFile);
@@ -418,7 +418,7 @@ int checkEOF(struct Script *script)
     // Use fgetc to check if it's the end of the file
     fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
 
-    //long currentPos = ftell(backingStore);
+    // long currentPos = ftell(backingStore);
 
     if (fgetc(backingStore) == EOF && feof(backingStore))
     {
@@ -439,7 +439,7 @@ int loadPageToFrameStore(char *process)
     int errCode = 0;
     char line[100];
     FILE *backingStore = fopen(process, "rt");
-    // printf("process: %s\n", process);
+    //printf("loading process: %s\n", process);
     if (backingStore == NULL)
     {
         return badcommandFileDoesNotExist(); // Handle file not found error
@@ -467,14 +467,14 @@ int loadPageToFrameStore(char *process)
     }
 
     int freeFrame = findFreeFrame();
-    // printf("Free frame: %d\n", freeFrame);
+     //printf("Free frame: %d\n", freeFrame);
 
     if (freeFrame == -1)
     {
         // printAgesFrames();
         freeFrame = findLRU();
         // printf("frame to replace number: %d\n", freeFrame);
-        //int frameID = frameStore[freeFrame].processId;
+        // int frameID = frameStore[freeFrame].processId;
         for (int k = 0; k < 3; k++)
         {
             // printf("Script: %d, frame: %d, Line%d: %s\n", id, freeFrame, k, frameStore[freeFrame].lines[k]);
@@ -506,18 +506,19 @@ int loadPageToFrameStore(char *process)
     // Use fgetc to check if it's the end of the file
     fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
 
-    //long currentPos = ftell(backingStore);
+    // long currentPos = ftell(backingStore);
 
     if (fgetc(backingStore) == EOF && feof(backingStore))
     {
-        // printf("End of file reached at position: %ld\n", currentPos);
+        //printf("End of file reached 3\n");
         fclose(backingStore);
-        return errCode; // Handle as needed
+        return -2; // Handle as needed
     }
     frameStore[freeFrame].linesUsed = 0;
     // Reset the file pointer to the original position
     // fseek(backingStore, currentPos, SEEK_SET);
 
+    int finishedScript = 0;
     fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
     for (int i = 0; i < 3; i++)
     {
@@ -525,6 +526,8 @@ int loadPageToFrameStore(char *process)
         {
             // printf("NUll line: %s\n", line);
             strcpy(frameStore[freeFrame].lines[i], "-1"); // Empty line if end-of-file
+            //printf("End of file reached\n");
+            finishedScript = -1;
             break;
         }
         else
@@ -554,8 +557,19 @@ int loadPageToFrameStore(char *process)
         if (script_pcb == NULL)
         {
             fclose(backingStore);
-            return errCode;
+            return finishedScript;
         }
+    }
+
+    fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
+
+    // long currentPos = ftell(backingStore);
+
+    if (fgetc(backingStore) == EOF && feof(backingStore))
+    {
+        //printf("End of file reached at position\n");
+        fclose(backingStore);
+        return -1; // Handle as needed
     }
 
     // printf("Script count2: %d\nscript page number: %d\n", script_count, script->totalPages);
@@ -577,7 +591,7 @@ int loadPageToFrameStore(char *process)
 
     // }
     fclose(backingStore);
-    return 0; // Success
+    return finishedScript; // Success
 }
 
 void printFramesForScript(int processId)
@@ -644,6 +658,7 @@ void printallFramesForScript()
 // script_num should be field in Frame
 int sendLinesToScript(int script_num, int pageNum)
 {
+    //printf("Sending lines to script\n");
     struct Script *script = scripts[script_num];
 
     // int pageNum = page;                                   // Page number based on current instruction
@@ -658,10 +673,10 @@ int sendLinesToScript(int script_num, int pageNum)
         return -1;
     }
 
-    // printf("frameStore[frameIdx].linesUsed: %d\n", frameStore[frameIdx].linesUsed);
+    //printf("script: %d, frame: %d, frameStore[frameIdx].linesUsed: %d\n", script_num, frameIdx, frameStore[frameIdx].linesUsed);
     for (int i = 0; i < frameStore[frameIdx].linesUsed; i++)
     {
-        // printf("Line to add: %s\n", frameStore[frameIdx].lines[i]);
+      //  printf("Line to add: %s\n", frameStore[frameIdx].lines[i]);
         add_line_to_script(script, frameStore[frameIdx].lines[i]);
     }
 
@@ -788,11 +803,17 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
         // I guess the idea here is to give it the # of pages that the process is going to use
         // int frameNumber = findFreeFrame();
 
-        loadPageToFrameStore(processes[0]);
+        int done = loadPageToFrameStore(processes[0]);
         sendLinesToScript(0, 0);
         // ageUsedFrames();
-        loadPageToFrameStore(processes[0]);
-        sendLinesToScript(0, 1);
+        if (done != -1)
+        {
+            int done = loadPageToFrameStore(processes[0]);
+            if (done != -2)
+                {
+            sendLinesToScript(0, 1);
+                }
+        }
         // ageUsedFrames();
         // printAgesFrames();
         // loadProcessestoMemory(processes[0]);
@@ -824,18 +845,28 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
         {
             // printf("Got here\n");
             // int frameNumber = findFreeFrame();
-            loadPageToFrameStore(processes[i]);
+            //printf("script to be loaded: %s\n", processes[i]);
+            int done = loadPageToFrameStore(processes[i]);
             sendLinesToScript(i, 0);
             // ageUsedFrames();
-            loadPageToFrameStore(processes[i]);
-            sendLinesToScript(i, 1);
+            
+            if (done != -1)
+            {
+                done = loadPageToFrameStore(processes[i]);
+                //printf("done2 = %d\n", done);
+                if (done != -2)
+                {
+                    sendLinesToScript(i, 1);
+                }
+            }
+            //printf("Got here\n");
             // ageUsedFrames(); // I think this might work, but I need to think about it a bit more
             //  printFramesForScript(i);
 
             // loadProcessestoMemory(processes[i]);
         }
 
-        //printallFramesForScript();
+        // printallFramesForScript();
 
         if (strcmp(policy, "FCFS") == 0)
         {
@@ -877,7 +908,7 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
 void load_queue_FCFS(int num_processes)
 {
     struct PCB *script_pcb = NULL;
-    //printf("this is script_count: %d\n", script_count);
+    // printf("this is script_count: %d\n", script_count);
 
     for (int i = 0; i < script_count; i++)
     {
@@ -886,7 +917,7 @@ void load_queue_FCFS(int num_processes)
         // printf("this is pid: %d job_length_score %d\n",script_pcb->pid, script_pcb->job_length_score); //Load Job_length scores here
         //  printf("this is PCB %s\n", scripts[script_pcb->pid]->head->line);
         add_to_ready_queue(script_pcb);
-       //printf("Added PCB with id: %d, and scripts number: %d to the ready queue.\n", script_pcb->pid, i);
+        // printf("Added PCB with id: %d, and scripts number: %d to the ready queue.\n", script_pcb->pid, i);
     }
     // printf("leaving load_queue_FCFS\n");
 }
@@ -949,10 +980,10 @@ void RR(int numCommands)
         // printf("Current script name: %s\n", current_script->name);
         struct LineNode *current_line_node = current_script->current;
         int instruction_num = current_script->current_instruction_num; // Local variable for instruction tracking
-        // printf("Current script line_num: %d\n", instruction_num);
+                                                                       // printf("Current script line_num: %d\n", instruction_num);
 
         int while_num2 = 0;
-        //  printf("Current script line count: %d, current instruction_num: %d\n", current_script->line_count, instruction_num);
+        //printf("Current script line count: %d, current instruction_num: %d\n", current_script->line_count, instruction_num);
         // printf("Current line node == NULL: %d\n", current_line_node ==NULL);
 
         while (instruction_num < current_script->line_count && current_line_node != NULL && while_num2 != numCommands)
@@ -993,10 +1024,11 @@ void RR(int numCommands)
         // printf("Total instructions executed: %d\n", instruction_num);
         if (current_script->current_instruction_num >= current_script->line_count)
         {
-            // printf("Total instructions executed: %d, number of lines in script: %d\n", instruction_num, current_script->line_count);
-
-            if (current_script->readyToChange == 0)
+            //printf("script: %s, Total instructions executed: %d, number of lines in script: %d\n", current_script->name, instruction_num, current_script->line_count);
+            // && while_num2 == numCommands
+            if (current_script->readyToChange == 0 && while_num2 == numCommands)
             {
+                //printf("script: %s ready to change, so it will change next time\n", current_script->name);
                 shift_queue();
                 current_script->readyToChange = 1;
                 // printf("Gonna continue\n");
@@ -1035,7 +1067,7 @@ void RR(int numCommands)
                 // This is exactly where we want to check if there are more frames for this script
                 //, and if so then put them in via LRU
 
-                // printf("Cleaning up process id: %d\n", current_process->pid);
+               // printf("Cleaning up process id: %d\n", current_process->pid);
                 //  printf("Is ready.head == NULL: %d\n", ready.head == NULL); //1 if true
                 current_script->current = NULL;
                 struct PCB *new_process = get_next_process();
@@ -1447,17 +1479,21 @@ int run(char *script)
 {
 
     initialize_frame_store();
-
-    loadPageToFrameStore(script);
-    sendLinesToScript(0, 0);
-    // ageUsedFrames();
-    loadPageToFrameStore(script);
-    sendLinesToScript(0, 1);
+    int done = loadPageToFrameStore(script);
+        sendLinesToScript(0, 0);
+        // ageUsedFrames();
+        if (done != -1)
+        {
+            int done = loadPageToFrameStore(script);
+            if (done != -2)
+                {
+            sendLinesToScript(0, 1);
+                }
+        }
     // ageUsedFrames();
     // printAgesFrames();
     // loadProcessestoMemory(processes[0]);
     load_queue_FCFS(1);
 
     RR(2);
-
 }
