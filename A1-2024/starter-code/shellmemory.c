@@ -12,9 +12,9 @@ struct memory_struct
 };
 
 
-struct memory_struct shellmemory[MEM_SIZE];
-struct Frame frameStore[FRAME_STORE_SIZE]; //the amount of frames will be multiple of 3
-int pageTable[4][FRAME_STORE_SIZE/3];
+struct memory_struct shellmemory[VARMEMSIZE];
+struct Frame frameStore[FRAMESIZE]; //the amount of frames will be multiple of 3
+int pageTable[4][FRAMESIZE/3];
 
 
 struct Script *scripts[10];
@@ -26,7 +26,7 @@ struct ReadyQueue ready = {NULL, NULL, 0}; // Ready queue initialization
 
 
 void initialize_frame_store() {
-    for (int i = 0; i < FRAME_STORE_SIZE; i++) {
+    for (int i = 0; i < FRAMESIZE; i++) {
         // Initialize lines to empty strings
         for (int j = 0; j < 3; j++) {
             frameStore[i].lines[j][0] = '\0';  // Set each line to an empty string
@@ -43,7 +43,7 @@ void initialize_frame_store() {
 
 int findFreeFrame(){
     int frame = -1;
-    for (int i = 0; i < FRAME_STORE_SIZE/3; i++){
+    for (int i = 0; i < FRAMESIZE/3; i++){
         //printf("find free frame Loop: %d\n", i);
         // A frame is considered free if it is not assigned to any process
         if (frameStore[i].processId == -1){
@@ -351,7 +351,7 @@ int match(char *model, char *var)
 void mem_init()
 {
     int i;
-    for (i = 0; i < MEM_SIZE; i++)
+    for (i = 0; i < VARMEMSIZE; i++)
     {
         shellmemory[i].var = "none";
         shellmemory[i].value = "none";
@@ -364,7 +364,7 @@ void mem_set_value(char *var_in, char *value_in)
     int i;
     
 
-    for (i = 0; i < MEM_SIZE; i++)
+    for (i = 0; i < VARMEMSIZE; i++)
     {
        // printf("bool for strcmp(shellmemory[i].var, var_in): %d, shellmemory[i].var: %s, var_in: %s\n", strcmp(shellmemory[i].var, var_in),shellmemory[i].var, var_in);
         if (strcmp(shellmemory[i].var, var_in) == 0)
@@ -377,7 +377,7 @@ void mem_set_value(char *var_in, char *value_in)
     }
 
     // Value does not exist, need to find a free spot.
-    for (i = 0; i < MEM_SIZE; i++)
+    for (i = 0; i < VARMEMSIZE; i++)
     {
         if (strcmp(shellmemory[i].var, "none") == 0)
         {
@@ -393,7 +393,7 @@ void mem_set_value(char *var_in, char *value_in)
 int mem_check_value(char *var_in)
 {
     int i;
-    for (i = 0; i < MEM_SIZE; i++)
+    for (i = 0; i < VARMEMSIZE; i++)
     {
         if (strcmp(shellmemory[i].var, var_in) == 0)
         {

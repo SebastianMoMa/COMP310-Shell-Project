@@ -15,7 +15,8 @@ int parseInput(char ui[]);
 // Start of everything
 int main(int argc, char *argv[])
 {
-    printf("Shell version 1.3 created September 2024\n");
+    // printf("Shell version 1.3 created September 2024\n");
+    printf("Frame Store Size = %d; Variable Store Size = %d", FRAMESIZE,VARMEMSIZE);
 
     // help();
     printf("\n");
@@ -38,7 +39,7 @@ int main(int argc, char *argv[])
         isBatch = 1;
     }
     struct Script *newScript = NULL;
-    char *hashtag_line = NULL;
+    char * hashtag_line = NULL;
 
 
     // init shell memory
