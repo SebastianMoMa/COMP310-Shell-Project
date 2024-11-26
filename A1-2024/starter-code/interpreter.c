@@ -82,10 +82,8 @@ void printAgesFrames();
 // Interpret commands and their arguments
 int interpreter(char *command_args[], int args_size)
 {
-    // printf("here interpreter\n");
     int i;
-    // printf("args_size 1: %d\n", args_size);
-
+    
     if (args_size < 1)
     {
         return badcommand();
@@ -399,30 +397,16 @@ int checkEOF(struct Script *script)
 
     int same_name = lookForName(script_count, process);
     script = NULL;
-    // int id = 0;
-    //  if (same_name == -1)
-    //  {
-    //      printf("New Script\n");
-    //      script = create_script(script_count, process); // Initialize the script if new
-    //      id = script_count;
-    //  }
-    //  else
-    //  {
+
     script = scripts[same_name];
-    // id = same_name;
-    // }
 
     int positionFile = script->offset;
-    // printf("Position in file: %d\n", positionFile);
 
     // Use fgetc to check if it's the end of the file
     fseek(backingStore, positionFile, SEEK_SET); // Position to the start of the page
 
-    // long currentPos = ftell(backingStore);
-
     if (fgetc(backingStore) == EOF && feof(backingStore))
     {
-        // printf("End of file reached at position: %ld\n", currentPos);
         fclose(backingStore);
         return 1; // Handle as needed
     }
@@ -798,12 +782,9 @@ int exec(char *processes[], int numProcesses, char *policy, int isBackground)
 
     if (numProcesses == 1 && isBackground != 1 && Background_happening != 1)
     {
-        // printf("Loading single process: %s\n", processes[0]);
-
-        // I guess the idea here is to give it the # of pages that the process is going to use
-        // int frameNumber = findFreeFrame();
-
+        // Here we load the first page of the script into memory
         int done = loadPageToFrameStore(processes[0]);
+        // Send lines from the first page (page 0) to the script's execution queue
         sendLinesToScript(0, 0);
         // ageUsedFrames();
         if (done != -1)
@@ -1402,82 +1383,8 @@ void load_queue_SJF(int numProcesses)
     // printf("leaving load_queue_FCFS\n");
 }
 
-int run1(char *script)
-{
-    // printf("Running script: %s\n", script);
-    int errCode = 0;
-    char line[MAX_USER_INPUT];
-    FILE *p = fopen(script, "rt");
-    if (p == NULL)
-    {
-        // fprintf(stderr, "Failed to open script file: %s\n", script);
-        return badcommandFileDoesNotExist();
-    }
-    struct Script *new_script = create_script(script_count, script); // Initialize the script
-    if (new_script == NULL)
-    {
-        fclose(p);
-        // fprintf(stderr, "Failed to create new script\n");
-        return errCode;
-    }
-    // printf("Created new script with count: %d\n", script_count);
-
-    struct PCB *script_pcb = create_pcb(script_count, new_script->current);
-    if (script_pcb == NULL)
-    {
-        fclose(p);
-        // fprintf(stderr, "Failed to create PCB for script\n");
-        return errCode;
-    }
-    // printf("script_count after create_pcb: %d\n", script_count);
-    script_count--;
-    // printf("Created PCB with id: %d\n", script_pcb->pid);
-    // add_to_ready_queue(script_pcb);
-
-    while (1) //(fgets(line, sizeof(line), p) !=NULL)
-    {
-        if (fgets(line, sizeof(line), p) == NULL)
-        {
-            add_line_to_script(new_script, " ");
-            // printf("This is line where fgets(line, sizeof(line), p) ==NULL: %s\n", line);
-            break;
-        }
-        if (feof(p))
-        {
-            // printf("This is last line: %s\n", line);
-            add_line_to_script(new_script, line);
-            break;
-        }
-        // printf("This is line: %s\n", line);
-        add_line_to_script(new_script, line);
-        // printf("Added line to script: %s\n", line);
-    }
-    fclose(p);
-
-    struct Script *current_script = new_script; // Get the process from array
-    // printf("Current script head line: %s\n", current_script->head->line);
-    struct LineNode *current_line_node = current_script->current;
-    int instruction_num = 0; // Local variable for instruction tracking
-
-    int while_num2 = 0;
-    // printf("Current script line count: %d\n", current_script->line_count);
-    while (instruction_num < current_script->line_count && current_line_node != NULL && while_num2 != 10)
-    {
-        // printf("Inside Scheduler1 inner while loop. while_num2 = %d\n", while_num2);
-        while_num2++;
-        char *current_line = current_line_node->line; // Get the current line
-        // printf("Current line_node line: %s\n", current_line_node->line);
-        int errCode = parseInput(current_line); // Process the current line
-        // printf("Parsed line with error code: %d\n", errCode);
-        current_line_node = current_line_node->next; // Advance to next line
-        instruction_num++;                           // Update instruction count
-    }
-    return errCode;
-}
-
 int run(char *script)
 {
-
     initialize_frame_store();
     int done = loadPageToFrameStore(script);
         sendLinesToScript(0, 0);
