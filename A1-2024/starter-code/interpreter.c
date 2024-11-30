@@ -419,7 +419,7 @@ int checkEOF(struct Script *script)
  * - Finds free frame or evicting LRU frame
  * - Loads up to 3 lines of the script into the frame store
  * - Updates page tables and script info
- * - Creates a new Process Control Block (PCB) if needed
+ * - Creates a new PCB if needed
  */
 int loadPageToFrameStore(char *process)
 {
@@ -1153,8 +1153,8 @@ int compare_ints(int a, int b)
 /**
  * Implements job aging logic for scheduling.
  *
- * Reduces job length scores and potentially reorders the ready queue
- * Handles different scenarios for 2 and 3 process queues
+ * Reduces job length scores and reorders the ready queue if necessary
+ * Handles differently for 2 and 3 processes
  */
 int AgeJobs()
 {
